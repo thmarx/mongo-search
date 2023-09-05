@@ -30,6 +30,8 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import de.marx_software.mongo.search.adapter.IndexAdapter;
 import de.marx_software.mongo.search.index.commands.DeleteCommand;
+import de.marx_software.mongo.search.index.commands.DropCollectionCommand;
+import de.marx_software.mongo.search.index.commands.DropDatabaseCommand;
 import de.marx_software.mongo.search.index.commands.IndexCommand;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,8 @@ public class Updater implements AutoCloseable {
 				case INSERT -> insert(document);
 				case UPDATE -> insert(document);
 				case DELETE -> delete(document);
+				case DROP -> dropCollection(document);
+				case DROP_DATABASE -> dropDatabase(document);
 			}
 		}
 	}
@@ -84,17 +88,33 @@ public class Updater implements AutoCloseable {
 	private void insert(ChangeStreamDocument<Document> document) {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var collection = document.getNamespace().getCollectionName();
+		var databaseName = document.getDatabaseName();
 		
-		
-		var command = new IndexCommand(uid, collection, document.getFullDocument());
+		var command = new IndexCommand(uid, databaseName, collection, document.getFullDocument());
 		indexAdapter.enqueueCommand(command);
 	}
 
 	private void delete(ChangeStreamDocument<Document> document) {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var collection = document.getNamespace().getCollectionName();
+		var databaseName = document.getDatabaseName();
 		
-		var command = new DeleteCommand(uid, collection);
+		var command = new DeleteCommand(uid, databaseName, collection);
+		indexAdapter.enqueueCommand(command);
+	}
+	
+	private void dropCollection(ChangeStreamDocument<Document> document) {
+		var collection = document.getNamespace().getCollectionName();
+		var databaseName = document.getDatabaseName();
+		
+		var command = new DropCollectionCommand(databaseName, collection);
+		indexAdapter.enqueueCommand(command);
+	}
+	
+	private void dropDatabase(ChangeStreamDocument<Document> document) {
+		var databaseName = document.getDatabaseName();
+		
+		var command = new DropDatabaseCommand(databaseName);
 		indexAdapter.enqueueCommand(command);
 	}
 }

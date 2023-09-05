@@ -47,12 +47,7 @@ public class MongoSearch implements AutoCloseable {
 	Updater updater;
 	Thread updaterThread;
 
-	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
 	public MongoSearch() {
-		scheduler.scheduleWithFixedDelay(() -> {
-			indexAdapter.commit();
-		}, 1, 1, TimeUnit.SECONDS);
 	}
 	
 	public IndexAdapter getIndexAdapter () {

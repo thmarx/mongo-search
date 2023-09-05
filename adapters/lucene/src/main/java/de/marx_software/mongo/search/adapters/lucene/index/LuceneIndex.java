@@ -19,7 +19,6 @@ package de.marx_software.mongo.search.adapters.lucene.index;
  * limitations under the License.
  * #L%
  */
-import de.marx_software.mongo.search.adapters.lucene.LuceneIndexAdapter;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -98,10 +97,13 @@ public class LuceneIndex {
 		configuration.getStorage().close();
 	}
 	
-	public int size(String collection) throws IOException {
+	public int size(String database, String collection) throws IOException {
 		var searcher = searcherManager.acquire();
 		try {
-			Query query = new BooleanQuery.Builder().add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST).build();
+			Query query = new BooleanQuery.Builder()
+					.add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST)
+					.add(new TermQuery(new Term("_database", database)), BooleanClause.Occur.MUST)
+					.build();
 			return searcher.count(query);
 		} finally {
 			searcherManager.release(searcher);

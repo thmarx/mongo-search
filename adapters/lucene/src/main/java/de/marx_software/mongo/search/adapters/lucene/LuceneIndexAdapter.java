@@ -23,17 +23,21 @@ package de.marx_software.mongo.search.adapters.lucene;
  * limitations under the License.
  * #L%
  */
-
 import de.marx_software.mongo.search.adapter.AbstractIndexAdapter;
 import de.marx_software.mongo.search.adapters.lucene.index.Documents;
 import de.marx_software.mongo.search.adapters.lucene.index.LuceneIndex;
 import de.marx_software.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
 import de.marx_software.mongo.search.index.commands.Command;
 import de.marx_software.mongo.search.index.commands.DeleteCommand;
+import de.marx_software.mongo.search.index.commands.DropCollectionCommand;
+import de.marx_software.mongo.search.index.commands.DropDatabaseCommand;
 import de.marx_software.mongo.search.index.commands.IndexCommand;
 import de.marx_software.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Term;
@@ -48,72 +52,92 @@ import org.bson.Document;
  * @author t.marx
  */
 public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfiguration> {
-	
+
 	LuceneIndex luceneIndex;
-	
+
 	private Thread queueWorkerThread;
-	
+
 	private PausableThread queueWorker;
-	
+
 	private Documents documentHelper;
 
-	public LuceneIndexAdapter (final LuceneIndexConfiguration configuration) {
+	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	
+	public LuceneIndexAdapter(final LuceneIndexConfiguration configuration) {
 		super(configuration);
-		
+
 		this.documentHelper = new Documents(configuration);
 	}
-	
+
 	@Override
-	public void indexDocument(String collection, Document document) throws IOException {
+	public void indexDocument(String database, String collection, Document document) throws IOException {
 		org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
 		doc.add(new StringField("_id", document.getObjectId("_id").toString(), Field.Store.YES));
 		doc.add(new StringField("_collection", collection, Field.Store.YES));
-		
+		doc.add(new StringField("_database", collection, Field.Store.YES));
+
 		luceneIndex.index(doc);
 	}
 
-	@Override
+	
 	public void commit() {
 		luceneIndex.commit();
 	}
 
 	@Override
 	public void close() throws Exception {
+		scheduler.shutdown();
 		queueWorker.stop();
 		queueWorkerThread.interrupt();
 		luceneIndex.close();
 	}
-	
+
 	@Override
-	public void startQueueWorker () {
+	public void startQueueWorker() {
 		this.queueWorker.unpause();
 	}
-	
-	public void open () throws IOException {
-		
+
+	public void open() throws IOException {
+
 		luceneIndex = new LuceneIndex(configuration);
 		luceneIndex.open();
+
+		scheduler.scheduleWithFixedDelay(() -> {
+			luceneIndex.commit();
+		}, 1, 1, TimeUnit.SECONDS);
 		
 		queueWorker = new PausableThread(true) {
 			@Override
 			public void update() {
 				try {
 					Command command = getCommandQueue().take();
-					
+
 					if (command instanceof IndexCommand index) {
 						org.apache.lucene.document.Document doc = documentHelper.build(index);
-						
+
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_id", index.uid())), BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_collection", index.collection())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_database", index.database())), BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
-						
+
 						luceneIndex.index(doc);
 					} else if (command instanceof DeleteCommand delete) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_id", delete.uid())), BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_collection", delete.collection())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_database", delete.database())), BooleanClause.Occur.MUST)
+								.build();
+						luceneIndex.deleteDocuments(query);
+					} else if (command instanceof DropCollectionCommand dropCollection) {
+						Query query = new BooleanQuery.Builder()
+								.add(new TermQuery(new Term("_collection", dropCollection.collection())), BooleanClause.Occur.MUST)
+								.build();
+						luceneIndex.deleteDocuments(query);
+					} else if (command instanceof DropDatabaseCommand dropDatabase) {
+						Query query = new BooleanQuery.Builder()
+								.add(new TermQuery(new Term("_database", dropDatabase.database())), BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
 					}
@@ -128,13 +152,12 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 		queueWorkerThread.start();
 	}
 
-	@Override
-	public int size(String collection) {
+	public int size(String database, String collection) {
 		try {
-			return luceneIndex.size(collection);
+			return luceneIndex.size(database, collection);
 		} catch (IOException ex) {
 			return 0;
 		}
 	}
-	
+
 }

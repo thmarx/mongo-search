@@ -74,7 +74,7 @@ public class Initializer {
 	
 	private void indexDocument (final String collection, final Document document) throws IOException {
 		
-		indexAdapter.indexDocument(collection, document);
+		indexAdapter.indexDocument(database.getName(), collection, document);
 		
 
 	}

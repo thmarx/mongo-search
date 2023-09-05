@@ -45,6 +45,7 @@ public class Documents {
 
 		doc.add(new StringField("_id", command.uid(), Field.Store.YES));
 		doc.add(new StringField("_collection", command.collection(), Field.Store.YES));
+		doc.add(new StringField("_database", command.database(), Field.Store.YES));
 
 		if (configuration.hasFieldConfigurations(command.collection())) {
 			var fieldConfigs = configuration.getFieldConfigurations(command.collection());

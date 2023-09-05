@@ -30,6 +30,6 @@ import java.util.Map;
  *
  * @author t.marx
  */
-public record DeleteCommand (String uid, String collection) implements Command {
+public record DeleteCommand (String uid, String database, String collection) implements Command {
 	
 }

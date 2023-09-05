@@ -1,12 +1,12 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package de.marx_software.mongo.search.adapter;
+package de.marx_software.mongo.search.index.commands;
 
 /*-
  * #%L
- * mongo-search-core
+ * mongo-search-index
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -24,19 +24,12 @@ package de.marx_software.mongo.search.adapter;
  * #L%
  */
 
-import de.marx_software.mongo.search.index.commands.Command;
-import java.io.IOException;
-import org.bson.Document;
+import java.util.Map;
 
 /**
  *
  * @author t.marx
  */
-public interface IndexAdapter extends AutoCloseable {
-
-	void indexDocument (final String database, final String collection, final Document document) throws IOException;
+public record DropCollectionCommand (String database, String collection) implements Command {
 	
-	void enqueueCommand (Command command);
-	
-	void startQueueWorker();
 }

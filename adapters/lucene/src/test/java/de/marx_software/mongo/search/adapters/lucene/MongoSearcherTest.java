@@ -19,6 +19,7 @@ package de.marx_software.mongo.search.adapters.lucene;
  * limitations under the License.
  * #L%
  */
+import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -37,14 +38,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.FSDirectory;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -70,8 +68,6 @@ public class MongoSearcherTest {
 		FileUtil.delete(Path.of("target/index"));
 		Files.createDirectories(Path.of("target/index"));
 
-		//client = MongoClients.create("mongodb://%s:%s".formatted(host, String.valueOf(port)));
-//		client = MongoClients.create("mongodb://127.0.0.1");
 		client = MongoClients.create(connectionString);
 
 		database = client.getDatabase("search");
@@ -122,7 +118,7 @@ public class MongoSearcherTest {
 
 		Thread.sleep(2000);
 
-		mongoSearch.getIndexAdapter().commit();
+		luceneIndexAdapter.commit();
 
 		assertCollectionSize("dokumente", 0);
 
@@ -144,7 +140,7 @@ public class MongoSearcherTest {
 
 		Thread.sleep(2000);
 
-		mongoSearch.getIndexAdapter().commit();
+		luceneIndexAdapter.commit();
 
 		assertCollectionSize("dokumente", 0);
 
@@ -194,7 +190,7 @@ public class MongoSearcherTest {
 
 	private int getSize(final String collection) throws IOException {
 
-		return luceneIndexAdapter.size(collection);
+		return luceneIndexAdapter.size("search", collection);
 	}
 
 	private void assertCollectionSize(final String collection, int size) throws IOException {
