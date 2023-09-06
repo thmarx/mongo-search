@@ -24,15 +24,14 @@ package de.marx_software.mongo.search.index;
  * #L%
  */
 
+import com.github.thmarx.mongo.trigger.Event;
+import com.github.thmarx.mongo.trigger.MongoTriggers;
 import com.mongodb.client.MongoDatabase;
 import de.marx_software.mongo.search.adapter.IndexAdapter;
 import de.marx_software.mongo.search.index.indexer.Initializer;
 import de.marx_software.mongo.search.index.indexer.Updater;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -47,6 +46,8 @@ public class MongoSearch implements AutoCloseable {
 	Updater updater;
 	Thread updaterThread;
 
+	MongoTriggers mongoTriggers;
+	
 	public MongoSearch() {
 	}
 	
@@ -56,7 +57,7 @@ public class MongoSearch implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		updater.close();
+		mongoTriggers.close();
 		indexAdapter.close();
 	}
 
@@ -64,11 +65,17 @@ public class MongoSearch implements AutoCloseable {
 		this.indexAdapter = indexAdapter;
 
 		initializer = new Initializer(indexAdapter, database, collections);
-		updater = new Updater(indexAdapter, database, collections);
+		updater = new Updater(indexAdapter, collections);
 		
-		updaterThread = new Thread(() -> {
-			updater.connect();
-		});
+		mongoTriggers = new MongoTriggers();
+		mongoTriggers.register((type, databasename) -> {});
+		mongoTriggers.register((type, databasename, collectionname) -> {});
+		mongoTriggers.register(Event.INSERT, (databasename, collectionname, document) -> {updater.insert(document);});
+		mongoTriggers.register(Event.DELETE, (databasename, collectionname, document) -> {updater.delete(document);});
+		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {updater.insert(document);});
+		
+		mongoTriggers.open(database);
+		
 		updaterThread.start();
 		initializer.initialize((Void) -> {
 			indexAdapter.startQueueWorker();

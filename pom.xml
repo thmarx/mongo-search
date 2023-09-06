@@ -41,6 +41,12 @@
 		<dependencies>
 			
 			<dependency>
+				<groupId>com.github.thmarx.mongo.trigger</groupId>
+				<artifactId>mongo-trigger-core</artifactId>
+				<version>0.3</version>
+			</dependency>
+			
+			<dependency>
 				<groupId>de.marx_software.mongo.search</groupId>
 				<artifactId>mongo-search-core</artifactId>
 				<version>${project.version}</version>
@@ -75,11 +81,6 @@
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
 				<version>1.18.28</version>
-			</dependency>
-			<dependency>
-				<groupId>de.bwaldvogel</groupId>
-				<artifactId>mongo-java-server</artifactId>
-				<version>1.44.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

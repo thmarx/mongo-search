@@ -23,7 +23,6 @@ package de.marx_software.mongo.search.index.indexer;
  * limitations under the License.
  * #L%
  */
-
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
@@ -43,77 +42,52 @@ import org.bson.Document;
  * @author t.marx
  */
 @RequiredArgsConstructor
-public class Updater implements AutoCloseable {
-	
+public class Updater {
+
 	private final IndexAdapter indexAdapter;
-	private final MongoDatabase database;
 	private final List<String> collections;
-	
-	private Thread watcher;
-	
-	public void connect () {
-		ChangeStreamIterable<Document> watch = database.watch().fullDocument(FullDocument.UPDATE_LOOKUP);
-		watcher = new Thread(() -> {
-			try {
-				watch.forEach(this::handle);
-			} catch (Exception e) {
-				// nichts zu tun
-			}
-		}, "ChangeStreamUpdated");
-		
-		watcher.start();
-	}
-	
-	public void handle (ChangeStreamDocument<Document> document) {
-		if (isCollectionRelevant(document)) {
-			switch (document.getOperationType()) {
-				case INSERT -> insert(document);
-				case UPDATE -> insert(document);
-				case DELETE -> delete(document);
-				case DROP -> dropCollection(document);
-				case DROP_DATABASE -> dropDatabase(document);
-			}
-		}
-	}
 
-	private boolean isCollectionRelevant(ChangeStreamDocument<Document> document) {
-		return document.getNamespace() != null && document.getNamespace().getCollectionName() != null && collections.contains(document.getNamespace().getCollectionName());
-	}
-	
-	@Override
-	public void close () {
-		watcher.interrupt();
-	}
 
-	private void insert(ChangeStreamDocument<Document> document) {
-		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
+	public void insert(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
-		var databaseName = document.getDatabaseName();
 		
+		if (!collections.contains(collection)) {
+			return;
+		}
+		
+		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
+		var databaseName = document.getDatabaseName();
+
 		var command = new IndexCommand(uid, databaseName, collection, document.getFullDocument());
 		indexAdapter.enqueueCommand(command);
 	}
 
-	private void delete(ChangeStreamDocument<Document> document) {
-		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
+	public void delete(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
-		var databaseName = document.getDatabaseName();
 		
+		if (!collections.contains(collection)) {
+			return;
+		}
+		
+		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
+		var databaseName = document.getDatabaseName();
+
 		var command = new DeleteCommand(uid, databaseName, collection);
 		indexAdapter.enqueueCommand(command);
 	}
-	
-	private void dropCollection(ChangeStreamDocument<Document> document) {
-		var collection = document.getNamespace().getCollectionName();
-		var databaseName = document.getDatabaseName();
+
+	public void dropCollection(final String database, final String collection) {
+		if (!collections.contains(collection)) {
+			return;
+		}
 		
-		var command = new DropCollectionCommand(databaseName, collection);
+		var command = new DropCollectionCommand(database, collection);
 		indexAdapter.enqueueCommand(command);
 	}
-	
-	private void dropDatabase(ChangeStreamDocument<Document> document) {
+
+	public void dropDatabase(ChangeStreamDocument<Document> document) {
 		var databaseName = document.getDatabaseName();
-		
+
 		var command = new DropDatabaseCommand(databaseName);
 		indexAdapter.enqueueCommand(command);
 	}
