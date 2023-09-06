@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package de.marx_software.mongo.search.adapter;
+package com.github.thmarx.mongo.search.adapter;
 
 /*-
  * #%L
@@ -24,7 +24,7 @@ package de.marx_software.mongo.search.adapter;
  * #L%
  */
 
-import de.marx_software.mongo.search.index.commands.Command;
+import com.github.thmarx.mongo.search.index.commands.Command;
 import java.io.IOException;
 import org.bson.Document;
 

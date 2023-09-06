@@ -1,4 +1,8 @@
-package de.marx_software.mongo.search.adapters.lucene;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
+package com.github.thmarx.mongo.search.adapters.lucene.index.storage;
 
 /*-
  * #%L
@@ -20,27 +24,16 @@ package de.marx_software.mongo.search.adapters.lucene;
  * #L%
  */
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
+import org.apache.lucene.store.Directory;
 
 /**
  *
  * @author t.marx
  */
-public class FileUtil {
-
-	public static void delete(Path pathToBeDeleted) throws IOException {
-
-		if (!Files.exists(pathToBeDeleted)) {
-			return;
-		}
-		
-		Files.walk(pathToBeDeleted)
-				.sorted(Comparator.reverseOrder())
-				.map(Path::toFile)
-				.forEach(File::delete);
-	}
+public interface Storage extends AutoCloseable {
+	
+	public Directory getDirectory ();
+	
+	public void open () throws IOException;
 }

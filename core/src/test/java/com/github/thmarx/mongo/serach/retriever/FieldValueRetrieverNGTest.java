@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/EmptyTestNGTest.java to edit this template
  */
-package de.marx_software.mongo.search.retriever;
+package com.github.thmarx.mongo.serach.retriever;
 
 /*-
  * #%L
@@ -24,6 +24,7 @@ package de.marx_software.mongo.search.retriever;
  * #L%
  */
 
+import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
 import com.mongodb.BasicDBObject;
 import java.util.List;
 import java.util.Map;

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package de.marx_software.mongo.search.index.utils;
+package com.github.thmarx.mongo.search.index.utils;
 
 /*-
  * #%L

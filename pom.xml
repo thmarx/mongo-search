@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>de.marx_software.mongo.search</groupId>
+	<groupId>com.github.thmarx.mongo.search</groupId>
 	<artifactId>mongo-search</artifactId>
 	<version>1.0</version>
 	<packaging>pom</packaging>
 	<modules>
-	 <module>adapters</module>
-	 <module>core</module>
+		<module>adapters</module>
+		<module>core</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,7 +16,8 @@
 		
 		<mongodb-driver-sync.version>4.10.2</mongodb-driver-sync.version>
 		<mongodb-crypt.version>1.8.0</mongodb-crypt.version>
-		<lucene.version>9.7.0</lucene.version>
+		
+		<mongo-trigger.version>0.4</mongo-trigger.version>
 	</properties>
 	<inceptionYear>2023</inceptionYear>
 	<organization>
@@ -43,11 +44,11 @@
 			<dependency>
 				<groupId>com.github.thmarx.mongo.trigger</groupId>
 				<artifactId>mongo-trigger-core</artifactId>
-				<version>0.3</version>
+				<version>${mongo-trigger.version}</version>
 			</dependency>
 			
 			<dependency>
-				<groupId>de.marx_software.mongo.search</groupId>
+				<groupId>com.github.thmarx.mongo.search</groupId>
 				<artifactId>mongo-search-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -81,6 +82,14 @@
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
 				<version>1.18.28</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>1.19.0</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

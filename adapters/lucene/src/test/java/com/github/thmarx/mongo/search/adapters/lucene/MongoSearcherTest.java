@@ -1,4 +1,4 @@
-package de.marx_software.mongo.search.adapters.lucene;
+package com.github.thmarx.mongo.search.adapters.lucene;
 
 /*-
  * #%L
@@ -19,16 +19,16 @@ package de.marx_software.mongo.search.adapters.lucene;
  * limitations under the License.
  * #L%
  */
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import de.marx_software.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
-import de.marx_software.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
-import de.marx_software.mongo.search.index.MongoSearch;
-import de.marx_software.mongo.search.index.configuration.FieldConfiguration;
-import de.marx_software.mongo.search.retriever.FieldValueRetrievers;
+import com.mongodb.client.model.Filters;
+import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
+import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
+import com.github.thmarx.mongo.search.index.MongoSearch;
+import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
+import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,10 +38,12 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.FSDirectory;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -114,7 +116,7 @@ public class MongoSearcherTest {
 	}
 
 	@Test
-	public void testSomeMethod() throws IOException, InterruptedException {
+	public void test_insert() throws IOException, InterruptedException {
 
 		Thread.sleep(2000);
 
@@ -135,6 +137,32 @@ public class MongoSearcherTest {
 		assertCollectionSize("dokumente", 2);
 	}
 
+	@Test
+	public void test_delete() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of("name", "thorsten"));
+		insertDocument("dokumente", Map.of("name", "thorsten"));
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
+		
+		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
+		try {
+			var uid = searcher.getIndexReader().storedFields().document(0).get("_id");
+			deleteDocument("dokumente", uid);
+		} finally {
+			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
+		}
+		
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
+		assertCollectionSize("dokumente", 1);
+	}
+	
 	@Test
 	public void test_retrievers() throws IOException, InterruptedException {
 
@@ -186,6 +214,11 @@ public class MongoSearcherTest {
 		MongoCollection<Document> collection = database.getCollection(collectionName);
 		Document document = new Document(attributes);
 		collection.insertOne(document);
+	}
+	
+	private void deleteDocument(final String collectionName, final String uid) {
+		MongoCollection<Document> collection = database.getCollection(collectionName);
+		collection.deleteOne(Filters.eq("_id", new ObjectId(uid)));
 	}
 
 	private int getSize(final String collection) throws IOException {

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package de.marx_software.mongo.search.index;
+package com.github.thmarx.mongo.search.index;
 
 /*-
  * #%L
@@ -27,9 +27,9 @@ package de.marx_software.mongo.search.index;
 import com.github.thmarx.mongo.trigger.Event;
 import com.github.thmarx.mongo.trigger.MongoTriggers;
 import com.mongodb.client.MongoDatabase;
-import de.marx_software.mongo.search.adapter.IndexAdapter;
-import de.marx_software.mongo.search.index.indexer.Initializer;
-import de.marx_software.mongo.search.index.indexer.Updater;
+import com.github.thmarx.mongo.search.adapter.IndexAdapter;
+import com.github.thmarx.mongo.search.index.indexer.Initializer;
+import com.github.thmarx.mongo.search.index.indexer.Updater;
 import java.io.IOException;
 import java.util.List;
 
@@ -44,7 +44,6 @@ public class MongoSearch implements AutoCloseable {
 	Initializer initializer;
 
 	Updater updater;
-	Thread updaterThread;
 
 	MongoTriggers mongoTriggers;
 	
@@ -76,7 +75,6 @@ public class MongoSearch implements AutoCloseable {
 		
 		mongoTriggers.open(database);
 		
-		updaterThread.start();
 		initializer.initialize((Void) -> {
 			indexAdapter.startQueueWorker();
 		});

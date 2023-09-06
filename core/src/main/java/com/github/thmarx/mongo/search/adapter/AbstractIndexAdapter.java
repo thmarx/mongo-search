@@ -1,4 +1,4 @@
-package de.marx_software.mongo.search.adapter;
+package com.github.thmarx.mongo.search.adapter;
 
 /*-
  * #%L
@@ -20,8 +20,8 @@ package de.marx_software.mongo.search.adapter;
  * #L%
  */
 
-import de.marx_software.mongo.search.index.commands.Command;
-import de.marx_software.mongo.search.index.configuration.IndexConfiguration;
+import com.github.thmarx.mongo.search.index.commands.Command;
+import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;

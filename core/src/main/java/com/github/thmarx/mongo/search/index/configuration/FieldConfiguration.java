@@ -1,6 +1,6 @@
-package de.marx_software.mongo.search.index.configuration;
+package com.github.thmarx.mongo.search.index.configuration;
 
-import de.marx_software.mongo.search.retriever.Retriever;
+import com.github.thmarx.mongo.search.retriever.Retriever;
 import lombok.Builder;
 import lombok.Getter;
 

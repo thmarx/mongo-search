@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package de.marx_software.mongo.search.index.indexer;
+package com.github.thmarx.mongo.search.index.indexer;
 
 /*-
  * #%L
@@ -25,7 +25,7 @@ package de.marx_software.mongo.search.index.indexer;
  */
 
 import com.mongodb.client.MongoDatabase;
-import de.marx_software.mongo.search.adapter.IndexAdapter;
+import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

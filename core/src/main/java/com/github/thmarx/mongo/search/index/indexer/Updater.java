@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package de.marx_software.mongo.search.index.indexer;
+package com.github.thmarx.mongo.search.index.indexer;
 
 /*-
  * #%L
@@ -27,11 +27,11 @@ import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
-import de.marx_software.mongo.search.adapter.IndexAdapter;
-import de.marx_software.mongo.search.index.commands.DeleteCommand;
-import de.marx_software.mongo.search.index.commands.DropCollectionCommand;
-import de.marx_software.mongo.search.index.commands.DropDatabaseCommand;
-import de.marx_software.mongo.search.index.commands.IndexCommand;
+import com.github.thmarx.mongo.search.adapter.IndexAdapter;
+import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
+import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
+import com.github.thmarx.mongo.search.index.commands.DropDatabaseCommand;
+import com.github.thmarx.mongo.search.index.commands.IndexCommand;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
