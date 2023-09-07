@@ -11,6 +11,7 @@
     <modules>
         <module>lucene</module>
 		<module>elasticsearch</module>
+		<module>opensearch</module>
 		<!--module>solr</module-->
     </modules>
 </project>

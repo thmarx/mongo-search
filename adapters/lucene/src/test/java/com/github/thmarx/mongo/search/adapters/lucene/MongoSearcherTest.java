@@ -52,7 +52,7 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class MongoSearcherTest {
+public class MongoSearcherTest extends AbstractContainerTest {
 
 	MongoClient client;
 
@@ -65,12 +65,10 @@ public class MongoSearcherTest {
 	@BeforeMethod
 	public void setup() throws IOException {
 
-		String connectionString = System.getenv("MONGO_SEARCH_CONNECTIONSTRING");
-
 		FileUtil.delete(Path.of("target/index"));
 		Files.createDirectories(Path.of("target/index"));
 
-		client = MongoClients.create(connectionString);
+		client = MongoClients.create(mongdbContainer.getConnectionString());
 
 		database = client.getDatabase("search");
 
