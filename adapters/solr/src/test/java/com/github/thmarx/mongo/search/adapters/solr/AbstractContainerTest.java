@@ -2,11 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.github.thmarx.mongo.search.adapters.lucene.index.storage;
+package com.github.thmarx.mongo.search.adapters.solr;
 
 /*-
  * #%L
- * mongo-search-index
+ * monog-search-adapters-opensearch
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -24,38 +24,38 @@ package com.github.thmarx.mongo.search.adapters.lucene.index.storage;
  * #L%
  */
 
-import java.io.IOException;
-import java.nio.file.Path;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.SolrContainer;
+import org.testcontainers.utility.DockerImageName;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 
 /**
  *
  * @author t.marx
  */
-public class FileSystemStorage implements Storage {
+public class AbstractContainerTest {
 
-	private Directory directory;
-	
-	private final Path path;
-	
-	public FileSystemStorage (final Path path) {
-		this.path = path;
-	}
-	
-	@Override
-	public Directory getDirectory() {
-		return directory;
-	}
+	protected SolrContainer solrContainer;
+	protected MongoDBContainer mongdbContainer;
 
-	@Override
-	public void open() throws IOException {
-		directory = FSDirectory.open(path);
+	@BeforeTest
+	public void up() {
+		solrContainer = new SolrContainer(DockerImageName.parse(
+				"solr:9.3"
+		)).withCommand("schemaless");
+		solrContainer.start();
+		
+		mongdbContainer = new MongoDBContainer(DockerImageName.parse(
+				"mongo:6.0.9"
+		));
+		mongdbContainer.start();
 	}
 
-	@Override
-	public void close() throws Exception {
-		this.directory.close();
+	@AfterTest
+	public void down() {
+		solrContainer.stop();
+		
+		mongdbContainer.stop();
 	}
-	
 }
