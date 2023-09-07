@@ -1,8 +1,8 @@
 package com.github.thmarx.mongo.search.index.configuration;
 
-import com.github.thmarx.mongo.search.retriever.Retriever;
 import lombok.Builder;
 import lombok.Getter;
+import com.github.thmarx.mongo.search.mapper.FieldMapper;
 
 /*-
  * #%L
@@ -34,5 +34,5 @@ public class FieldConfiguration {
 	private final String fieldName;
 	private final String indexFieldName;
 	
-	private final Retriever retriever;
+	private final FieldMapper retriever;
 }

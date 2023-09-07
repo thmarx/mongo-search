@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package com.github.thmarx.mongo.search.retriever;
+package com.github.thmarx.mongo.search.mapper;
 
 /*-
  * #%L
@@ -24,13 +24,12 @@ package com.github.thmarx.mongo.search.retriever;
  * #L%
  */
 
-import org.bson.Document;
+import java.util.List;
 
 /**
  *
  * @author t.marx
  */
 @FunctionalInterface
-public interface Retriever<T> {
-	T getFieldValue (final String name, final Document document);
+public interface ListMapper<T> extends FieldMapper<List<T>> {
 }

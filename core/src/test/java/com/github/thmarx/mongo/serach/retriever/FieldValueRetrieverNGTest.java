@@ -24,7 +24,7 @@ package com.github.thmarx.mongo.serach.retriever;
  * #L%
  */
 
-import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
+import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.mongodb.BasicDBObject;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class FieldValueRetrieverNGTest {
 		Document document = new Document();
 		document.put("name", "Hallo Leute");
 
-		String value = FieldValueRetrievers.getStringFieldValue("name", document);
+		String value = FieldMappers.getStringFieldValue("name", document);
 
 		Assertions.assertThat(value).isEqualTo("Hallo Leute");
 	}
@@ -58,7 +58,7 @@ public class FieldValueRetrieverNGTest {
 		emb.put("name", "Hallo ihr da draußen");
 		document.put("emb", emb);
 
-		String value = FieldValueRetrievers.getStringFieldValue("emb.name", document);
+		String value = FieldMappers.getStringFieldValue("emb.name", document);
 		Assertions.assertThat(value).isEqualTo("Hallo ihr da draußen");
 	}
 
@@ -67,7 +67,7 @@ public class FieldValueRetrieverNGTest {
 		Document document = new Document();
 		document.put("names", List.of("eins", "zwei"));
 
-		List<String> value = FieldValueRetrievers.getStringArrayFieldValue("names", document);
+		List<String> value = FieldMappers.getStringArrayFieldValue("names", document);
 
 		Assertions.assertThat(value).containsExactly("eins", "zwei");
 	}
@@ -81,7 +81,7 @@ public class FieldValueRetrieverNGTest {
 		emb.put("names", List.of("eins", "zwei"));
 		document.put("emb", emb);
 
-		List<String> value = FieldValueRetrievers.getStringArrayFieldValue("emb.names", document);
+		List<String> value = FieldMappers.getStringArrayFieldValue("emb.names", document);
 		Assertions.assertThat(value).containsExactly("eins", "zwei");
 	}
 
@@ -98,7 +98,7 @@ public class FieldValueRetrieverNGTest {
 		));
 		document.put("emb", emb);
 
-		List<String> value = FieldValueRetrievers.getStringArrayFieldValue("emb.cities.name", document);
+		List<String> value = FieldMappers.getStringArrayFieldValue("emb.cities.name", document);
 		Assertions.assertThat(value).containsExactly("bochum", "essen", "dortmund");
 	}
 

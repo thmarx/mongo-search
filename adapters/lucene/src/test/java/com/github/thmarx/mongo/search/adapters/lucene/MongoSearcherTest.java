@@ -28,7 +28,7 @@ import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfigura
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
 import com.github.thmarx.mongo.search.index.MongoSearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
-import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
+import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,19 +84,19 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
-				.retriever(FieldValueRetrievers::getStringFieldValue)
+				.retriever(FieldMappers::getStringFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
-				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
+				.retriever(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
-				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
+				.retriever(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 

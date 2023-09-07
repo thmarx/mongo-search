@@ -32,12 +32,10 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.github.thmarx.mongo.search.index.MongoSearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
-import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
+import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Updates;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -142,19 +140,19 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
-				.retriever(FieldValueRetrievers::getStringFieldValue)
+				.retriever(FieldMappers::getStringFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
-				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
+				.retriever(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
-				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
+				.retriever(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 

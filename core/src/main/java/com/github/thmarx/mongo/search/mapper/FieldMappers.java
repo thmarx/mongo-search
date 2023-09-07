@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.github.thmarx.mongo.search.retriever;
+package com.github.thmarx.mongo.search.mapper;
 
 /*-
  * #%L
@@ -34,7 +34,7 @@ import org.bson.Document;
  *
  * @author t.marx
  */
-public class FieldValueRetrievers {
+public class FieldMappers {
 
 	public static String getStringFieldValue (final String name, final Document document) {
 		var names = name.split("\\.");
@@ -79,16 +79,6 @@ public class FieldValueRetrievers {
 					values.addAll(getValues(subquery, doc, type));
 				}
 			});
-		} else if (temp instanceof String) {
-			
-		} else if (temp instanceof Date) {
-			
-		} else if (temp instanceof Double) {
-			
-		} else if (temp instanceof Integer) {
-			
-		} else if (temp instanceof Long) {
-			
 		}
 		
 		return values;
