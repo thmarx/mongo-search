@@ -27,31 +27,23 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
+import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
 import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
-import com.github.thmarx.mongo.search.index.commands.IndexCommand;
+import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
+import com.github.thmarx.mongo.search.index.commands.InsertCommand;
+import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.message.BasicHeader;
 import org.bson.Document;
-import org.elasticsearch.client.RestClient;
 
 /**
  *
@@ -103,13 +95,17 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 				try {
 					Command command = getCommandQueue().take();
 
-					if (command instanceof IndexCommand indexCommand) {
+					if (command instanceof InsertCommand indexCommand) {
 						index(indexCommand);
+					} else if (command instanceof DeleteCommand deleteCommand) {
+						delete(deleteCommand);
+					} else if (command instanceof UpdateCommand updateCommand) {
+						ElasticsearchIndexAdapter.this.update(updateCommand);
+					} else if (command instanceof DropCollectionCommand dropCollectionCommand) {
+						dropCollection(dropCollectionCommand);
 					}
 
 				} catch (Exception ex) {
-					// nothing to do
-					ex.printStackTrace();
 				}
 			}
 		};
@@ -117,10 +113,12 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		queueWorkerThread.start();
 	}
 
-	private void index(IndexCommand command) {
+	private void index(InsertCommand command) {
 		try {
 
 			Map<String, Object> document = new HashMap<>();
+			document.put("_database", command.database());
+			document.put("_collection", command.collection());
 			if (configuration.hasFieldConfigurations(command.collection())) {
 				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
 				fieldConfigs.forEach((fc) -> {
@@ -130,14 +128,37 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			}
 
 			IndexResponse response = esClient.index(i -> i
-					.index(command.collection())
+					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.id(command.uid())
 					.document(document)
 			);
-			System.out.println(response.id());
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
-			ex.printStackTrace();
+		}
+	}
+	
+	private void update(UpdateCommand command) {
+		try {
+
+			Map<String, Object> document = new HashMap<>();
+			document.put("_database", command.database());
+			document.put("_collection", command.collection());
+			if (configuration.hasFieldConfigurations(command.collection())) {
+				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
+				fieldConfigs.forEach((fc) -> {
+					var value = fc.getRetriever().getFieldValue(fc.getFieldName(), command.document());
+					document.put(fc.getIndexFieldName(), value);
+				});
+			}
+
+			esClient.update(u -> 
+					u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
+					.id(command.uid())
+					.doc(document)
+					, Map.class
+			);
+		} catch (IOException | ElasticsearchException ex) {
+			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -150,7 +171,19 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			);
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
-			ex.printStackTrace();
+		}
+	}
+	
+	private void dropCollection(DropCollectionCommand command) {
+		try {
+
+			boolean exists = esClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();
+			
+			if (exists) {
+				esClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
+			}
+		} catch (IOException | ElasticsearchException ex) {
+			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 }

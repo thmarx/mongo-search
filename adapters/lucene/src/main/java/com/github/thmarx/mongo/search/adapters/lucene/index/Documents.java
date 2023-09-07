@@ -24,7 +24,7 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
  * #L%
  */
 
-import com.github.thmarx.mongo.search.index.commands.IndexCommand;
+import com.github.thmarx.mongo.search.index.commands.InsertCommand;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.document.Document;
@@ -40,7 +40,7 @@ public class Documents {
 
 	private final LuceneIndexConfiguration configuration;
 
-	public Document build(final IndexCommand command) {
+	public Document build(final InsertCommand command) {
 		var doc = new Document();
 
 		doc.add(new StringField("_id", command.uid(), Field.Store.YES));

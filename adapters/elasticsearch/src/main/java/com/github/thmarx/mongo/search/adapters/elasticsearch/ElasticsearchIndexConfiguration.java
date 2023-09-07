@@ -28,6 +28,9 @@ import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
 import java.util.Collection;
+import java.util.function.BiFunction;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -35,6 +38,10 @@ import java.util.Collection;
  */
 public class ElasticsearchIndexConfiguration extends IndexConfiguration {
 	final MultiMap<String, FieldConfiguration> fieldConfigurations = new MultiMap<>();
+	
+	@Getter
+	@Setter
+	private BiFunction<String, String, String> indexNameMapper = (database, collection) -> collection;
 	
 	public ElasticsearchIndexConfiguration addFieldConfiguration (final String collection, final FieldConfiguration fieldConfig) {
 		fieldConfigurations.put(collection, fieldConfig);

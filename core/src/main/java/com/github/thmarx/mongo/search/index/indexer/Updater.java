@@ -23,17 +23,14 @@ package com.github.thmarx.mongo.search.index.indexer;
  * limitations under the License.
  * #L%
  */
-import com.mongodb.client.ChangeStreamIterable;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-import com.mongodb.client.model.changestream.FullDocument;
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
 import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
 import com.github.thmarx.mongo.search.index.commands.DropDatabaseCommand;
-import com.github.thmarx.mongo.search.index.commands.IndexCommand;
+import com.github.thmarx.mongo.search.index.commands.InsertCommand;
+import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 
@@ -58,10 +55,24 @@ public class Updater {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var databaseName = document.getDatabaseName();
 
-		var command = new IndexCommand(uid, databaseName, collection, document.getFullDocument());
+		var command = new InsertCommand(uid, databaseName, collection, document.getFullDocument());
 		indexAdapter.enqueueCommand(command);
 	}
 
+	public void update(ChangeStreamDocument<Document> document) {
+		var collection = document.getNamespace().getCollectionName();
+		
+		if (!collections.contains(collection)) {
+			return;
+		}
+		
+		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
+		var databaseName = document.getDatabaseName();
+
+		var command = new UpdateCommand(uid, databaseName, collection, document.getFullDocument());
+		indexAdapter.enqueueCommand(command);
+	}
+	
 	public void delete(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
 		
@@ -85,10 +96,8 @@ public class Updater {
 		indexAdapter.enqueueCommand(command);
 	}
 
-	public void dropDatabase(ChangeStreamDocument<Document> document) {
-		var databaseName = document.getDatabaseName();
-
-		var command = new DropDatabaseCommand(databaseName);
+	public void dropDatabase(final String database) {
+		var command = new DropDatabaseCommand(database);
 		indexAdapter.enqueueCommand(command);
 	}
 }

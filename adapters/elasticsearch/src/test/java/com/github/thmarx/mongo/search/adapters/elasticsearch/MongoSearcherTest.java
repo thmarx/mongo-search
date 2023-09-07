@@ -21,6 +21,7 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  */
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.CountResponse;
+import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -32,26 +33,26 @@ import com.mongodb.client.model.Filters;
 import com.github.thmarx.mongo.search.index.MongoSearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.retriever.FieldValueRetrievers;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.model.Updates;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.message.BasicHeader;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.elasticsearch.client.RestClient;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.utility.DockerImageName;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -62,7 +63,7 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class MongoSearcherTest {
+public class MongoSearcherTest extends AbstractContainerTest {
 
 	static String PASSWORD = "AgY7KUJwb5M*e36Y3=gb";
 
@@ -78,30 +79,23 @@ public class MongoSearcherTest {
 	ElasticsearchTransport transport;
 	ElasticsearchClient esClient;
 
-	ElasticsearchContainer container;
+	private final static String COLLECTION_DOKUMENTE = "dokumente";
 
-//	@BeforeClass
-	public void up() {
-		container = new ElasticsearchContainer(DockerImageName.parse(
-				"docker.elastic.co/elasticsearch/elasticsearch:8.9.1-amd64"
-		));
-		container.start();
-	}
-//	@AfterClass
-	public void down () {
-		container.stop();
-	}
-
-	@BeforeMethod
+	@BeforeClass
 	public void setup() throws IOException {
 
+		String protocol = elasticSearchContainer.caCertAsBytes().isPresent() ? "https://" : "http://";
+
 		restClient = RestClient
-				.builder(HttpHost.create(/*container.getHttpHostAddress()*/ "https://testcluster-6975475491.eu-central-1.bonsaisearch.net:443"))
+				.builder(HttpHost.create(protocol + elasticSearchContainer.getHttpHostAddress()))
 				.setHttpClientConfigCallback((clientBuilder) -> {
 
+					if (elasticSearchContainer.caCertAsBytes().isPresent()) {
+						clientBuilder.setSSLContext(elasticSearchContainer.createSslContextFromCa());
+					}
+
 					final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-					//UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("elastic", ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
-					UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("b2wvxs2gpd", "qm8ytnecz1");
+					UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("elastic", ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
 					credentialsProvider.setCredentials(AuthScope.ANY, credentials);
 
 					return clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
@@ -116,33 +110,48 @@ public class MongoSearcherTest {
 		esClient = new ElasticsearchClient(transport);
 
 		String connectionString = System.getenv("MONGO_SEARCH_CONNECTIONSTRING");
-
-		FileUtil.delete(Path.of("target/index"));
-		Files.createDirectories(Path.of("target/index"));
-
-		client = MongoClients.create(connectionString);
+		//client = MongoClients.create(connectionString);
+		client = MongoClients.create(mongdbContainer.getConnectionString());
 
 		database = client.getDatabase("search");
+	}
 
-		if (database.getCollection("dokumente") != null) {
-			database.getCollection("dokumente").drop();
+	@AfterClass
+	public void shutdown() throws Exception {
+		client.close();
+		esClient.shutdown();
+	}
+
+	@BeforeMethod
+	public void cleanup() throws IOException {
+		if (esClient.indices().exists((fn) -> fn.index(COLLECTION_DOKUMENTE)).value()) {
+			esClient.indices().delete((b) -> b.index(COLLECTION_DOKUMENTE));
 		}
-		database.createCollection("dokumente");
 
+		esClient.indices().create((b)
+				-> b.index(COLLECTION_DOKUMENTE)
+						.waitForActiveShards(fn -> fn.count(1))
+		);
+		
+		if (database.getCollection(COLLECTION_DOKUMENTE) != null) {
+			database.getCollection(COLLECTION_DOKUMENTE).drop();
+		}
+		database.createCollection(COLLECTION_DOKUMENTE);
+		
 		ElasticsearchIndexConfiguration configuration = new ElasticsearchIndexConfiguration();
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
 				.retriever(FieldValueRetrievers::getStringFieldValue)
 				.build()
 		);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
 				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
 				.build()
 		);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
 				.retriever(FieldValueRetrievers::getStringArrayFieldValue)
@@ -153,35 +162,84 @@ public class MongoSearcherTest {
 		indexAdapter.open(esClient);
 
 		mongoSearch = new MongoSearch();
-		mongoSearch.open(indexAdapter, database, List.of("dokumente", "bilder"));
+		mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 	}
-
+	
 	@AfterMethod
-	public void shutdown() throws Exception {
-		client.close();
+	public void afterMethod() throws Exception {
 		mongoSearch.close();
-
-		esClient.shutdown();
 	}
 
 	@Test
 	public void test_insert() throws IOException, InterruptedException {
 
 		Thread.sleep(2000);
+		
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
-		indexAdapter.commit();
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
 
-		insertDocument("dokumente", Map.of("name", "thorsten"));
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
-		assertCollectionSize("dokumente", 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 
-		insertDocument("dokumente", Map.of("name", "thorsten"));
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+	}
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 1);
+	@Test
+	public void test_delete() throws IOException, InterruptedException {
 
-		assertCollectionSize("dokumente", 2);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		database.getCollection(COLLECTION_DOKUMENTE).deleteMany(Filters.empty());
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+	}
+
+	@Test
+	public void test_update() throws IOException, InterruptedException {
+
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		FindIterable<Document> find = database.getCollection(COLLECTION_DOKUMENTE).find(Filters.empty());
+
+		var doc = find.first();
+
+		var id = doc.getObjectId("_id");
+		
+		Bson update = Updates.combine(
+		Updates.set("tags", List.of("eins", "zwei"))
+		);
+		
+		database.getCollection(COLLECTION_DOKUMENTE).updateOne(Filters.eq("_id", id), update);
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+			GetResponse<Map> get = esClient.get(fn -> fn.id(id.toString()).index(COLLECTION_DOKUMENTE), Map.class);
+			return get.found() && get.source().containsKey("tags");
+		});
+	}
+	
+	@Test
+	public void test_dropCollection() throws IOException, InterruptedException {
+
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		database.getCollection(COLLECTION_DOKUMENTE).drop();
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 	}
 
 	private void insertDocument(final String collectionName, final Map attributes) {
@@ -196,7 +254,11 @@ public class MongoSearcherTest {
 	}
 
 	private long getSize(final String collection) throws IOException {
-		CountResponse count = esClient.count((i) -> i.index("dokumente"));
+		if (!esClient.indices().exists((fn) -> fn.index(collection)).value()) {
+			return 0;
+		}
+
+		CountResponse count = esClient.count((i) -> i.index(collection));
 		return count.count();
 	}
 

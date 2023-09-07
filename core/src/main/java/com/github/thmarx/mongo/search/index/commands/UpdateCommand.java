@@ -30,6 +30,6 @@ import org.bson.Document;
  *
  * @author t.marx
  */
-public record IndexCommand (String uid, String database, String collection, Document document) implements Command {
+public record UpdateCommand (String uid, String database, String collection, Document document) implements Command {
 	
 }

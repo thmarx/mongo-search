@@ -30,6 +30,8 @@ import com.mongodb.client.MongoDatabase;
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.github.thmarx.mongo.search.index.indexer.Initializer;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
+import com.github.thmarx.mongo.trigger.CollectionTrigger;
+import com.github.thmarx.mongo.trigger.DatabaseTrigger;
 import java.io.IOException;
 import java.util.List;
 
@@ -67,11 +69,20 @@ public class MongoSearch implements AutoCloseable {
 		updater = new Updater(indexAdapter, collections);
 		
 		mongoTriggers = new MongoTriggers();
-		mongoTriggers.register((type, databasename) -> {});
-		mongoTriggers.register((type, databasename, collectionname) -> {});
+		mongoTriggers.register((type, databasename) -> {
+		
+			if (DatabaseTrigger.Type.DROPPED.equals(type)) {
+				updater.dropDatabase(databasename);
+			}
+		});
+		mongoTriggers.register((type, databasename, collectionname) -> {
+			if (CollectionTrigger.Type.DROPPED.equals(type)) {
+				updater.dropCollection(databasename, collectionname);
+			}
+		});
 		mongoTriggers.register(Event.INSERT, (databasename, collectionname, document) -> {updater.insert(document);});
 		mongoTriggers.register(Event.DELETE, (databasename, collectionname, document) -> {updater.delete(document);});
-		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {updater.insert(document);});
+		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {updater.update(document);});
 		
 		mongoTriggers.open(database);
 		

@@ -31,7 +31,7 @@ import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
 import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
 import com.github.thmarx.mongo.search.index.commands.DropDatabaseCommand;
-import com.github.thmarx.mongo.search.index.commands.IndexCommand;
+import com.github.thmarx.mongo.search.index.commands.InsertCommand;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
 import java.util.List;
@@ -116,7 +116,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 				try {
 					Command command = getCommandQueue().take();
 
-					if (command instanceof IndexCommand index) {
+					if (command instanceof InsertCommand index) {
 						org.apache.lucene.document.Document doc = documentHelper.build(index);
 
 						Query query = new BooleanQuery.Builder()
