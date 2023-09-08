@@ -162,7 +162,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		try {
 
 			DeleteResponse response = esClient.delete(i -> i
-					.index(command.collection())
+					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.id(command.uid()));
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
@@ -182,7 +182,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			if (exists) {
 				//esClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
 				esClient.deleteByQuery(fn -> 
-					fn.index(command.collection())
+					fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.query(qb -> 
 						qb.match(t ->
 							t.field("_collection").query(command.collection())

@@ -165,7 +165,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		try {
 
 			DeleteResponse response = osClient.delete(i -> i
-					.index(command.collection())
+					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.id(command.uid())
 			);
 		} catch (IOException ex) {
@@ -185,7 +185,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 			if (exists) {
 				//osClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
 				osClient.deleteByQuery(fn -> 
-					fn.index(command.collection())
+					fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.query(qb -> 
 						qb.match(t ->
 							t.field("_collection").query(FieldValue.of(command.collection()))
