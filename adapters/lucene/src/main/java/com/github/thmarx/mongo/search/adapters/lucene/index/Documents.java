@@ -50,13 +50,16 @@ public class Documents {
 		if (configuration.hasFieldConfigurations(command.collection())) {
 			var fieldConfigs = configuration.getFieldConfigurations(command.collection());
 			fieldConfigs.forEach((fc) -> {
-				var value = fc.getRetriever().getFieldValue(fc.getFieldName(), command.document());
+				var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
 				if (value instanceof String stringValue) {
 					doc.add(new StringField(fc.getIndexFieldName(), stringValue, Field.Store.YES));
 				} else if (value instanceof List listValue) {
 					listValue.stream().map(String.class::cast).forEach((stringValue) -> {
 						doc.add(new StringField(fc.getIndexFieldName(), (String) stringValue, Field.Store.YES));
 					});
+				}
+				if (fc.getExtender() != null) {
+					fc.getExtender().accept(command.document(), doc);
 				}
 
 			});

@@ -4,10 +4,16 @@ import com.github.thmarx.mongo.search.adapters.lucene.index.storage.Storage;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.facet.FacetsConfig;
+import org.bson.Document;
 
 /*-
  * #%L
@@ -37,15 +43,19 @@ public class LuceneIndexConfiguration extends IndexConfiguration {
 	Storage storage;
 	
 	Analyzer defaultAnalyzer;
+
+	@Getter
+	@Setter
+	FacetsConfig facetsConfig;
 	
-	final MultiMap<String, FieldConfiguration> fieldConfigurations = new MultiMap<>();
+	final MultiMap<String, FieldConfiguration<Document, org.apache.lucene.document.Document>> fieldConfigurations = new MultiMap<>();
 	
-	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final FieldConfiguration fieldConfig) {
+	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final FieldConfiguration<Document, org.apache.lucene.document.Document> fieldConfig) {
 		fieldConfigurations.put(collection, fieldConfig);
 		return this;
 	}
 	
-	public Collection<FieldConfiguration> getFieldConfigurations (final String collection) {
+	public Collection<FieldConfiguration<org.bson.Document, org.apache.lucene.document.Document>> getFieldConfigurations (final String collection) {
 		return fieldConfigurations.get(collection);
 	}
 	public boolean hasFieldConfigurations (final String collection) {

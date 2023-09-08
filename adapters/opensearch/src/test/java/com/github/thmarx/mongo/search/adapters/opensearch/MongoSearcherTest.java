@@ -139,19 +139,19 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
-				.retriever(FieldMappers::getStringFieldValue)
+				.mapper(FieldMappers::getStringFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
-				.retriever(FieldMappers::getStringArrayFieldValue)
+				.mapper(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
-				.retriever(FieldMappers::getStringArrayFieldValue)
+				.mapper(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 

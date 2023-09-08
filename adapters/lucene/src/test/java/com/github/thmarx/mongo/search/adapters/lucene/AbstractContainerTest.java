@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.github.thmarx.mongo.search.adapters.lucene;
 
 /*-
@@ -23,8 +19,9 @@ package com.github.thmarx.mongo.search.adapters.lucene;
  * limitations under the License.
  * #L%
  */
-
+import java.time.Duration;
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;

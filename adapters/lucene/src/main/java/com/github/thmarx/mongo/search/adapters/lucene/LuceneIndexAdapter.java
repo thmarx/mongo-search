@@ -59,7 +59,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 	private PausableThread queueWorker;
 
-	private Documents documentHelper;
+	private final Documents documentHelper;
 
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	

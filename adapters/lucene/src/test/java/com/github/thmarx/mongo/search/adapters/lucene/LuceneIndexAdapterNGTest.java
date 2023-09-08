@@ -32,13 +32,30 @@ import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsConfig;
+import org.apache.lucene.facet.sortedset.DefaultSortedSetDocValuesReaderState;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
@@ -52,7 +69,7 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class MongoSearcherTest extends AbstractContainerTest {
+public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 	MongoClient client;
 
@@ -61,6 +78,8 @@ public class MongoSearcherTest extends AbstractContainerTest {
 	private MongoDatabase database;
 
 	private LuceneIndexAdapter luceneIndexAdapter;
+	
+	private FacetsConfig facetConfig = new FacetsConfig();
 
 	@BeforeMethod
 	public void setup() throws IOException {
@@ -77,26 +96,39 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		}
 		database.createCollection("dokumente");
 
+		facetConfig.setMultiValued("tags", true);
 		LuceneIndexConfiguration configuration = new LuceneIndexConfiguration();
 		configuration.setDefaultAnalyzer(new StandardAnalyzer());
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
+		configuration.setFacetsConfig(facetConfig);
 		
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
 				.fieldName("name")
 				.indexFieldName("name")
-				.retriever(FieldMappers::getStringFieldValue)
+				.mapper(FieldMappers::getStringFieldValue)
 				.build()
 		);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		
+		
+		facetConfig.setMultiValued("tags", true);
+		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
-				.retriever(FieldMappers::getStringArrayFieldValue)
+				.mapper(FieldMappers::getStringArrayFieldValue)
+				.extender((source, target) -> {
+					var values = FieldMappers.getStringArrayFieldValue("tags", source);
+					if (!values.isEmpty()) {
+						values.forEach(value -> {
+							target.add(new SortedSetDocValuesFacetField("tags", value));
+						});
+					}
+				})
 				.build()
 		);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.builder()
+		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
-				.retriever(FieldMappers::getStringArrayFieldValue)
+				.mapper(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 
@@ -162,7 +194,7 @@ public class MongoSearcherTest extends AbstractContainerTest {
 	}
 	
 	@Test
-	public void test_retrievers() throws IOException, InterruptedException {
+	public void test_mapper() throws IOException, InterruptedException {
 
 		Thread.sleep(2000);
 
@@ -205,6 +237,65 @@ public class MongoSearcherTest extends AbstractContainerTest {
 					.containsExactlyInAnyOrder("Bochum", "Essen", "Dortmund");
 		} finally {
 			reader.close();
+		}
+	}
+	
+	@Test
+	public void test_extender() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"tags", List.of("eins", "zwei")
+		));
+		insertDocument("dokumente", Map.of(
+				"name", "lara",
+				"tags", List.of("drei", "zwei")
+		));
+
+		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
+
+		luceneIndexAdapter.commit();
+		
+		Set<String> tags = getSortedSetFacet("dokumente", "tags");
+		Assertions.assertThat(tags)
+					.isNotNull()
+					.hasSize(3)
+					.containsExactlyInAnyOrder("eins", "zwei", "drei");
+	}
+	
+	private Set<String> getSortedSetFacet(final String collectionName, final String fieldName) throws IOException {
+		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
+		try {
+			/*
+			SortedSetDocValues sortedSetValues = MultiDocValues.getSortedSetValues(searcher.getIndexReader(), fieldName);
+			if (sortedSetValues == null || sortedSetValues.nextDoc() == SortedSetDocValues.NO_MORE_DOCS) {
+				return Collections.emptySet();
+			}
+			 */
+			
+			Set<String> fieldValues = new HashSet<>();
+					
+			SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(searcher.getIndexReader(), facetConfig);
+			
+			FacetsCollector collector = new FacetsCollector();
+			
+			TermQuery collectionQuery = new TermQuery(new Term("_collection", collectionName));
+			
+			FacetsCollector.search(searcher, collectionQuery, 10, collector);
+			Facets facets = new SortedSetDocValuesFacetCounts(state, collector);
+			FacetResult allChildren = facets.getAllChildren(fieldName);
+
+			Stream.of(allChildren.labelValues).forEach(lv -> fieldValues.add(lv.label));
+			
+			return fieldValues;
+		} finally {
+			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
 		}
 	}
 	

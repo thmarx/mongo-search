@@ -122,7 +122,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			if (configuration.hasFieldConfigurations(command.collection())) {
 				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
 				fieldConfigs.forEach((fc) -> {
-					var value = fc.getRetriever().getFieldValue(fc.getFieldName(), command.document());
+					var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
 					document.put(fc.getIndexFieldName(), value);
 				});
 			}
@@ -146,7 +146,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			if (configuration.hasFieldConfigurations(command.collection())) {
 				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
 				fieldConfigs.forEach((fc) -> {
-					var value = fc.getRetriever().getFieldValue(fc.getFieldName(), command.document());
+					var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
 					document.put(fc.getIndexFieldName(), value);
 				});
 			}

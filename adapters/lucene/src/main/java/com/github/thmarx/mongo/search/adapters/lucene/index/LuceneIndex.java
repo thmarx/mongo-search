@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -46,8 +47,11 @@ public class LuceneIndex {
 	
 	private final LuceneIndexConfiguration configuration;
 	
+	FacetsConfig facetsConfig = null;
+
 	public LuceneIndex(LuceneIndexConfiguration configuration) {
 		this.configuration = configuration;
+		this.facetsConfig = configuration.facetsConfig;
 	}
 
 	public LuceneIndex open() throws IOException {
@@ -68,7 +72,12 @@ public class LuceneIndex {
 	}
 	
 	public void index (final Document document) throws IOException {
-		writer.addDocument(document);
+		if (facetsConfig != null) {
+			writer.addDocument(facetsConfig.build(document));
+		} else {
+			writer.addDocument(document);
+		}
+		
 	}
 	
 	public void deleteDocuments (Query query) throws IOException {

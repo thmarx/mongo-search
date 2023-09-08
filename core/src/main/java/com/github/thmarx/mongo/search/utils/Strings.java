@@ -1,13 +1,12 @@
-package com.github.thmarx.mongo.search.index.configuration;
-
-import lombok.Builder;
-import lombok.Getter;
-import com.github.thmarx.mongo.search.mapper.FieldMapper;
-import java.util.function.BiConsumer;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.github.thmarx.mongo.search.utils;
 
 /*-
  * #%L
- * mongo-search-index
+ * mongo-search-core
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -29,14 +28,8 @@ import java.util.function.BiConsumer;
  *
  * @author t.marx
  */
-@Builder
-@Getter
-public class FieldConfiguration<SD, TD> {
-	private final String fieldName;
-	private final String indexFieldName;
-	
-	private final FieldMapper mapper;
-	
-	@Builder.Default
-	private BiConsumer<SD, TD> extender = (source, target) -> {};
+public final class Strings {
+	public static boolean isNullOrEmpty (final String value) {
+		return value == null || "".equals(value.trim());
+	}
 }

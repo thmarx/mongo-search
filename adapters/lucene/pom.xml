@@ -9,7 +9,7 @@
 	<artifactId>monog-search-adapters-lucene</artifactId>
 	<packaging>jar</packaging>
 	<properties>
-        <lucene.version>9.7.0</lucene.version>
+		<lucene.version>9.7.0</lucene.version>
 	</properties>
 	
 	<dependencies>
@@ -27,14 +27,22 @@
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
+			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analysis-common</artifactId>
+			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-backward-codecs</artifactId>
+			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-facet</artifactId>
+			<version>${lucene.version}</version>
 		</dependency>
 		
 		<dependency>
