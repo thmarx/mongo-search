@@ -1,5 +1,43 @@
 package com.github.thmarx.mongo.search.adapters.lucene;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsConfig;
+import org.apache.lucene.facet.sortedset.DefaultSortedSetDocValuesReaderState;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField;
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.store.FSDirectory;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
+import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
+import com.github.thmarx.mongo.search.index.MongoSearch;
+import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
+import com.github.thmarx.mongo.search.mapper.FieldMappers;
 /*-
  * #%L
  * mongo-search-index
@@ -24,43 +62,6 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
-import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
-import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
-import com.github.thmarx.mongo.search.mapper.FieldMappers;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.facet.FacetResult;
-import org.apache.lucene.facet.Facets;
-import org.apache.lucene.facet.FacetsCollector;
-import org.apache.lucene.facet.FacetsConfig;
-import org.apache.lucene.facet.sortedset.DefaultSortedSetDocValuesReaderState;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.store.FSDirectory;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  *
@@ -68,25 +69,21 @@ import org.testng.annotations.Test;
  */
 public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
-	MongoClient client;
-
 	MongoSearch mongoSearch;
 
 	private MongoDatabase database;
 
 	private LuceneIndexAdapter luceneIndexAdapter;
-	
-	private FacetsConfig facetConfig = new FacetsConfig();
 
+	private FacetsConfig facetConfig = new FacetsConfig();
+	
 	@BeforeMethod
-	public void setup() throws IOException {
+	public void setup() throws IOException, InterruptedException {
+
+		database = mongoClient.getDatabase("search");
 
 		FileUtil.delete(Path.of("target/index"));
 		Files.createDirectories(Path.of("target/index"));
-
-		client = MongoClients.create(mongdbContainer.getConnectionString());
-
-		database = client.getDatabase("search");
 
 		if (database.getCollection("dokumente") != null) {
 			database.getCollection("dokumente").drop();
@@ -98,15 +95,14 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		configuration.setDefaultAnalyzer(new StandardAnalyzer());
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
-		
+
 		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
 				.fieldName("name")
 				.indexFieldName("name")
 				.mapper(FieldMappers::getStringFieldValue)
 				.build()
 		);
-		
-		
+
 		facetConfig.setMultiValued("tags", true);
 		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
 				.fieldName("tags")
@@ -138,7 +134,6 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 	@AfterMethod
 	public void shutdown() throws Exception {
-		client.close();
 		mongoSearch.close();
 	}
 
@@ -177,7 +172,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		insertDocument("dokumente", Map.of("name", "thorsten"));
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
-		
+
 		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
 		try {
 			var uid = searcher.getIndexReader().storedFields().document(0).get("_id");
@@ -185,11 +180,11 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		} finally {
 			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
 		}
-		
+
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
 		assertCollectionSize("dokumente", 1);
 	}
-	
+
 	@Test
 	public void test_mapper() throws IOException, InterruptedException {
 
@@ -213,20 +208,20 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
 		try {
-			
+
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
-			
+
 			Assertions.assertThat(doc.get("_collection")).isNotNull();
 			Assertions.assertThat(doc.get("_id")).isNotNull();
-			
+
 			Assertions.assertThat(doc.get("name")).isNotNull().isEqualTo("thorsten");
-			
+
 			Assertions.assertThat(doc.get("tags")).isNotNull();
 			Assertions.assertThat(doc.getValues("tags"))
 					.isNotNull()
 					.hasSize(2)
 					.containsExactlyInAnyOrder("eins", "zwei");
-			
+
 			Assertions.assertThat(doc.get("cities")).isNotNull();
 			Assertions.assertThat(doc.getValues("cities"))
 					.isNotNull()
@@ -236,7 +231,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 			reader.close();
 		}
 	}
-	
+
 	@Test
 	public void test_extender() throws IOException, InterruptedException {
 
@@ -258,14 +253,14 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
 
 		luceneIndexAdapter.commit();
-		
+
 		Set<String> tags = getSortedSetFacet("dokumente", "tags");
 		Assertions.assertThat(tags)
-					.isNotNull()
-					.hasSize(3)
-					.containsExactlyInAnyOrder("eins", "zwei", "drei");
+				.isNotNull()
+				.hasSize(3)
+				.containsExactlyInAnyOrder("eins", "zwei", "drei");
 	}
-	
+
 	private Set<String> getSortedSetFacet(final String collectionName, final String fieldName) throws IOException {
 		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
 		try {
@@ -275,33 +270,33 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				return Collections.emptySet();
 			}
 			 */
-			
+
 			Set<String> fieldValues = new HashSet<>();
-					
+
 			SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(searcher.getIndexReader(), facetConfig);
-			
+
 			FacetsCollector collector = new FacetsCollector();
-			
+
 			TermQuery collectionQuery = new TermQuery(new Term("_collection", collectionName));
-			
+
 			FacetsCollector.search(searcher, collectionQuery, 10, collector);
 			Facets facets = new SortedSetDocValuesFacetCounts(state, collector);
 			FacetResult allChildren = facets.getAllChildren(fieldName);
 
 			Stream.of(allChildren.labelValues).forEach(lv -> fieldValues.add(lv.label));
-			
+
 			return fieldValues;
 		} finally {
 			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
 		}
 	}
-	
+
 	private void insertDocument(final String collectionName, final Map attributes) {
 		MongoCollection<Document> collection = database.getCollection(collectionName);
 		Document document = new Document(attributes);
 		collection.insertOne(document);
 	}
-	
+
 	private void deleteDocument(final String collectionName, final String uid) {
 		MongoCollection<Document> collection = database.getCollection(collectionName);
 		collection.deleteOne(Filters.eq("_id", new ObjectId(uid)));

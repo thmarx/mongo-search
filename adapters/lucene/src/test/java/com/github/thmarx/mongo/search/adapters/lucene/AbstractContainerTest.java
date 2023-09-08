@@ -19,12 +19,14 @@ package com.github.thmarx.mongo.search.adapters.lucene;
  * limitations under the License.
  * #L%
  */
-import java.time.Duration;
+
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
 import org.testcontainers.utility.DockerImageName;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 
 /**
  *
@@ -33,17 +35,21 @@ import org.testng.annotations.BeforeTest;
 public class AbstractContainerTest {
 
 	protected MongoDBContainer mongdbContainer;
+	protected MongoClient mongoClient;
 
-	@BeforeTest
+	@BeforeClass
 	public void up() {
 		mongdbContainer = new MongoDBContainer(DockerImageName.parse(
 				"mongo:6.0.9"
 		));
 		mongdbContainer.start();
+
+		mongoClient = MongoClients.create(mongdbContainer.getConnectionString());
 	}
 
-	@AfterTest
+	@AfterClass
 	public void down() {
+		mongoClient.close();
 		mongdbContainer.stop();
 	}
 }
