@@ -50,11 +50,8 @@ import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField;
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.assertj.core.api.Assertions;
@@ -117,7 +114,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.mapper(FieldMappers::getStringArrayFieldValue)
 				.extender((source, target) -> {
 					var values = FieldMappers.getStringArrayFieldValue("tags", source);
-					if (!values.isEmpty()) {
+					if (values != null && !values.isEmpty()) {
 						values.forEach(value -> {
 							target.add(new SortedSetDocValuesFacetField("tags", value));
 						});
