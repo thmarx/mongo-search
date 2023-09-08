@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/EmptyTestNGTest.java to edit this template
  */
-package com.github.thmarx.mongo.serach.retriever;
+package com.github.thmarx.mongo.serach.mapper;
 
 /*-
  * #%L
@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class FieldValueRetrieverNGTest {
+public class FieldMapperNGTest {
 
 	@Test
 	public void test_simple_string() {

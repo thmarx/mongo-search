@@ -25,10 +25,9 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  */
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
-import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
 import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
@@ -87,7 +86,6 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 	public void open(ElasticsearchClient esClient) throws IOException {
 
 		this.esClient = esClient;
-		
 
 		queueWorker = new PausableThread(true) {
 			@Override
@@ -130,13 +128,12 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			IndexResponse response = esClient.index(i -> i
 					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
 					.id(command.uid())
-					.document(document)
-			);
+					.document(document));
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	private void update(UpdateCommand command) {
 		try {
 
@@ -151,12 +148,11 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 				});
 			}
 
-			esClient.update(u -> 
-					u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-					.id(command.uid())
-					.doc(document)
-					, Map.class
-			);
+			esClient.update(
+					u -> u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
+							.id(command.uid())
+							.doc(document),
+					Map.class);
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -167,20 +163,32 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 
 			DeleteResponse response = esClient.delete(i -> i
 					.index(command.collection())
-					.id(command.uid())
-			);
+					.id(command.uid()));
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
+	/**
+	 * In elasticsearch the index is not dropped, we just delete all documents
+	 * 
+	 * @param command
+	 */
 	private void dropCollection(DropCollectionCommand command) {
 		try {
 
 			boolean exists = esClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();
 			
 			if (exists) {
-				esClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
+				//esClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
+				esClient.deleteByQuery(fn -> 
+					fn.index(command.collection())
+					.query(qb -> 
+						qb.match(t ->
+							t.field("_collection").query(command.collection())
+						)
+					)
+				);
 			}
 		} catch (IOException | ElasticsearchException ex) {
 			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);

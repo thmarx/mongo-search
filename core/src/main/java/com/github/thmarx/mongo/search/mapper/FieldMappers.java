@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.github.thmarx.mongo.search.mapper;
 
 /*-
@@ -26,7 +22,6 @@ package com.github.thmarx.mongo.search.mapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import org.bson.Document;
 
@@ -69,7 +64,7 @@ public class FieldMappers {
 		
 		var subquery = query.replace(parts[0] + ".", "");
 		
-		List values = new ArrayList<>();
+		List<T> values = new ArrayList<>();
 		Object temp = document.get(parts[0]);
 		if (temp instanceof Document doc) {
 			values.addAll(getValues(subquery, doc, type));

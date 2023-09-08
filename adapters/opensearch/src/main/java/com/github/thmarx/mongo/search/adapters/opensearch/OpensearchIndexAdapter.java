@@ -4,6 +4,20 @@
  */
 package com.github.thmarx.mongo.search.adapters.opensearch;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bson.Document;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.FieldValue;
+import org.opensearch.client.opensearch.core.DeleteResponse;
+import org.opensearch.client.opensearch.core.IndexResponse;
+
 /*-
  * #%L
  * monog-search-adapters-lucene
@@ -30,17 +44,6 @@ import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
 import com.github.thmarx.mongo.search.index.commands.InsertCommand;
 import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bson.Document;
-import org.opensearch.client.opensearch.OpenSearchClient;
-import org.opensearch.client.opensearch.core.DeleteResponse;
-import org.opensearch.client.opensearch.core.IndexResponse;
 
 /**
  *
@@ -170,13 +173,25 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		}
 	}
 	
+	/**
+	 * For OpenSearch the collection will not be dropped!
+	 * @param command
+	 */
 	private void dropCollection(DropCollectionCommand command) {
 		try {
 
 			boolean exists = osClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();
 			
 			if (exists) {
-				osClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
+				//osClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
+				osClient.deleteByQuery(fn -> 
+					fn.index(command.collection())
+					.query(qb -> 
+						qb.match(t ->
+							t.field("_collection").query(FieldValue.of(command.collection()))
+						)
+					)
+				);
 			}
 		} catch (IOException ex) {
 			Logger.getLogger(OpensearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);

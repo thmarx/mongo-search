@@ -35,7 +35,7 @@ public class FieldConfiguration<SD, TD> {
 	private final String fieldName;
 	private final String indexFieldName;
 	
-	private final FieldMapper mapper;
+	private final FieldMapper<?> mapper;
 	
 	@Builder.Default
 	private BiConsumer<SD, TD> extender = (source, target) -> {};
