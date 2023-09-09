@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.thmarx.mongo.search</groupId>
 	<artifactId>mongo-search</artifactId>
@@ -13,10 +15,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		
+
 		<mongodb-driver-sync.version>4.10.2</mongodb-driver-sync.version>
 		<mongodb-crypt.version>1.8.0</mongodb-crypt.version>
-		
+
 		<mongo-trigger.version>0.4</mongo-trigger.version>
 	</properties>
 	<inceptionYear>2023</inceptionYear>
@@ -37,22 +39,22 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<dependencyManagement>
 		<dependencies>
-			
+
 			<dependency>
 				<groupId>com.github.thmarx.mongo.trigger</groupId>
 				<artifactId>mongo-trigger-core</artifactId>
 				<version>${mongo-trigger.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.github.thmarx.mongo.search</groupId>
 				<artifactId>mongo-search-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.mongodb</groupId>
 				<artifactId>mongodb-driver-sync</artifactId>
@@ -68,7 +70,7 @@
 				<artifactId>lombok</artifactId>
 				<version>1.18.28</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
@@ -78,7 +80,7 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>org.testng</groupId>
@@ -99,7 +101,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>

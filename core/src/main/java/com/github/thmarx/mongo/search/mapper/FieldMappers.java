@@ -32,25 +32,65 @@ import org.bson.Document;
 public class FieldMappers {
 
 	public static String getStringFieldValue (final String name, final Document document) {
-		var names = name.split("\\.");
-		
-		if (names.length > 1) {
-			return document.getEmbedded(Arrays.asList(names), String.class);
-		} else {
-			return document.getString(names[0]);
-		}
+		return getFieldValue(name, document, String.class);
 	}
 	
 	public static List<String> getStringArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, String.class);
+	}
+	
+	public static Integer getIntegerFieldValue (final String name, final Document document) {
+		return getFieldValue(name, document, Integer.class);
+	}
+	
+	public static List<Integer> getIntegerArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Integer.class);
+	}
+
+	public static Long getLongFieldValue (final String name, final Document document) {
+		return getFieldValue(name, document, Long.class);
+	}
+	
+	public static List<Long> getLongArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Long.class);
+	}
+
+	public static Float getFloatFieldValue (final String name, final Document document) {
+		return getFieldValue(name, document, Float.class);
+	}
+	
+	public static List<Float> getFloatArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Float.class);
+	}
+
+	public static Double getDoubleFieldValue (final String name, final Document document) {
+		return getFieldValue(name, document, Double.class);
+	}
+	
+	public static List<Double> getDoubleArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Double.class);
+	}
+
+	private static <T> T getFieldValue (final String name, final Document document, Class<T> type) {
 		var names = name.split("\\.");
 		
 		if (names.length > 1) {
-			return getValues(name, document, String.class);
+			return document.getEmbedded(Arrays.asList(names), type);
 		} else {
-			return document.getList(names[0], String.class);
+			return document.get(names[0], type);
 		}
 	}
-	
+
+	private static <T> List<T> getArrayFieldValue (final String name, final Document document, final Class<T> type) {
+		var names = name.split("\\.");
+		
+		if (names.length > 1) {
+			return getValues(name, document, type);
+		} else {
+			return document.getList(names[0], type);
+		}
+	}
+
 	static <T> List<T> getValues (final String query, final Document document, final Class<T> type) {
 		var parts = query.split("\\.");
 		if (parts.length == 1) {

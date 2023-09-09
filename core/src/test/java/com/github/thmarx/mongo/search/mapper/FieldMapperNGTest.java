@@ -40,13 +40,30 @@ import org.testng.annotations.Test;
 public class FieldMapperNGTest {
 
 	@Test
-	public void test_simple_string() {
+	public void test_simple() {
 		Document document = new Document();
 		document.put("name", "Hallo Leute");
+		document.put("int", 45);
+		document.put("float", 4.5f);
+		document.put("long", 45l);
+		document.put("double", 45.5d);
 
-		String value = FieldMappers.getStringFieldValue("name", document);
-
-		Assertions.assertThat(value).isEqualTo("Hallo Leute");
+		Assertions.assertThat(
+			FieldMappers.getStringFieldValue("name", document)
+		).isEqualTo("Hallo Leute");
+	
+		Assertions.assertThat(
+			FieldMappers.getIntegerFieldValue("int", document)
+		).isEqualTo(45);
+		Assertions.assertThat(
+			FieldMappers.getFloatFieldValue("float", document)
+		).isEqualTo(4.5f);
+		Assertions.assertThat(
+			FieldMappers.getLongFieldValue("long", document)
+		).isEqualTo(45l);
+		Assertions.assertThat(
+			FieldMappers.getDoubleFieldValue("double", document)
+		).isEqualTo(45.5d);
 	}
 
 	@Test
