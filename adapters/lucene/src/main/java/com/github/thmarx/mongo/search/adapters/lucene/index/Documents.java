@@ -25,11 +25,19 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
  */
 
 import com.github.thmarx.mongo.search.index.commands.InsertCommand;
+import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FloatPoint;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 
 /**
  *
@@ -52,11 +60,9 @@ public class Documents {
 			fieldConfigs.forEach((fc) -> {
 				var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
 				if (value instanceof String stringValue) {
-					doc.add(new StringField(fc.getIndexFieldName(), stringValue, Field.Store.YES));
-				} else if (value instanceof List listValue) {
-					listValue.stream().map(String.class::cast).forEach((stringValue) -> {
-						doc.add(new StringField(fc.getIndexFieldName(), (String) stringValue, Field.Store.YES));
-					});
+					addField(stringValue, doc, fc);
+				} else if (value instanceof List<?> listValue && !listValue.isEmpty()) {
+					addListField(listValue, doc, fc);
 				}
 				if (fc.getExtender() != null) {
 					fc.getExtender().accept(command.document(), doc);
@@ -67,4 +73,46 @@ public class Documents {
 
 		return doc;
 	}
+
+	private void addListField(List<?> value, Document document, LuceneFieldConfiguration fc) {
+		if (value == null || value.isEmpty()) {
+			return;
+		}
+
+		value.forEach((item) -> addField(item, document, fc));
+	}
+
+	private void addField(Object value, Document document, LuceneFieldConfiguration fc) {
+		if (value == null) {
+			return;
+		}
+		if (value instanceof String stringValue) {
+			//document.add(new StringField(fc.getIndexFieldName(), stringValue, fc.isStored() ? Field.Store.YES : Field.Store.NO));
+			document.add(new TextField(fc.getIndexFieldName(), stringValue, Field.Store.NO));
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), stringValue));
+			}
+		} else if (value instanceof Integer numberValue) {
+			document.add(new IntPoint(fc.getIndexFieldName(), numberValue));
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), numberValue));
+			}
+		} else if (value instanceof Long numberValue) {
+			document.add(new LongPoint(fc.getIndexFieldName(), numberValue));
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), numberValue));
+			}
+		} else if (value instanceof Float numberValue) {
+			document.add(new FloatPoint(fc.getIndexFieldName(), numberValue));
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), numberValue));
+			}
+		} else if (value instanceof Double numberValue) {
+			document.add(new DoublePoint(fc.getIndexFieldName(), numberValue));
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), numberValue));
+			}
+		}
+	}
+
 }

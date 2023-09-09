@@ -2,6 +2,8 @@ package com.github.thmarx.mongo.search.index.configuration;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+
 import com.github.thmarx.mongo.search.mapper.FieldMapper;
 import java.util.function.BiConsumer;
 
@@ -29,12 +31,12 @@ import java.util.function.BiConsumer;
  *
  * @author t.marx
  */
-@Builder
+@SuperBuilder
 @Getter
 public class FieldConfiguration<SD, TD> {
 	private final String fieldName;
 	private final String indexFieldName;
-	
+
 	private final FieldMapper<?> mapper;
 	
 	@Builder.Default

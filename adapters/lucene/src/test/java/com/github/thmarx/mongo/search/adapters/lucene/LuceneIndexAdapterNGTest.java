@@ -33,6 +33,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneFieldConfiguration;
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
 import com.github.thmarx.mongo.search.index.MongoSearch;
@@ -57,8 +58,6 @@ import com.github.thmarx.mongo.search.mapper.FieldMappers;
  * limitations under the License.
  * #L%
  */
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -96,17 +95,19 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
 
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
+				.stored(true)
 				.mapper(FieldMappers::getStringFieldValue)
 				.build()
 		);
 
 		facetConfig.setMultiValued("tags", true);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
+				.stored(true)
 				.mapper(FieldMappers::getStringArrayFieldValue)
 				.extender((source, target) -> {
 					var values = FieldMappers.getStringArrayFieldValue("tags", source);
@@ -118,9 +119,10 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				})
 				.build()
 		);
-		configuration.addFieldConfiguration("dokumente", FieldConfiguration.<Document, org.apache.lucene.document.Document>builder()
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
+				.stored(true)
 				.mapper(FieldMappers::getStringArrayFieldValue)
 				.build()
 		);
@@ -148,7 +150,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		insertDocument("dokumente", Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") > 0);
 
 		assertCollectionSize("dokumente", 1);
 

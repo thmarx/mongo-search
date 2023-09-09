@@ -48,14 +48,14 @@ public class LuceneIndexConfiguration extends IndexConfiguration {
 	@Setter
 	FacetsConfig facetsConfig;
 	
-	final MultiMap<String, FieldConfiguration<Document, org.apache.lucene.document.Document>> fieldConfigurations = new MultiMap<>();
+	final MultiMap<String, LuceneFieldConfiguration> fieldConfigurations = new MultiMap<>();
 	
-	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final FieldConfiguration<Document, org.apache.lucene.document.Document> fieldConfig) {
+	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final LuceneFieldConfiguration fieldConfig) {
 		fieldConfigurations.put(collection, fieldConfig);
 		return this;
 	}
 	
-	public Collection<FieldConfiguration<org.bson.Document, org.apache.lucene.document.Document>> getFieldConfigurations (final String collection) {
+	public Collection<LuceneFieldConfiguration> getFieldConfigurations (final String collection) {
 		return fieldConfigurations.get(collection);
 	}
 	public boolean hasFieldConfigurations (final String collection) {
