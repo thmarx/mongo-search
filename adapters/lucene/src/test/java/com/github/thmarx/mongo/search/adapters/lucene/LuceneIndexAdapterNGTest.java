@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.lucene.analysis.de.GermanAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.facet.FacetResult;
 import org.apache.lucene.facet.Facets;
@@ -91,7 +93,12 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		facetConfig.setMultiValued("tags", true);
 		LuceneIndexConfiguration configuration = new LuceneIndexConfiguration();
-		configuration.setDefaultAnalyzer(new StandardAnalyzer());
+		
+		PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
+			Map.of("name", new GermanAnalyzer())
+		);
+		configuration.setAnalyzer(perFieldAnalyzerWrapper);
+
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
 

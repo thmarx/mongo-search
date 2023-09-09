@@ -59,7 +59,7 @@ public class LuceneIndex {
 		configuration.getStorage().open();
 		
 		NRTCachingDirectory cachedFSDir = new NRTCachingDirectory(configuration.getStorage().getDirectory(), 5.0, 60.0);
-		IndexWriterConfig conf = new IndexWriterConfig(configuration.getDefaultAnalyzer());
+		IndexWriterConfig conf = new IndexWriterConfig(configuration.getAnalyzer());
 		writer = new IndexWriter(cachedFSDir, conf);
 		
 		searcherManager = new SearcherManager(writer, true, false, new SearcherFactory());

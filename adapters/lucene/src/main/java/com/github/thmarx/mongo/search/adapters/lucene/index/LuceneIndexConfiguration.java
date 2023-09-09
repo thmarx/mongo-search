@@ -1,19 +1,16 @@
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
+import java.util.Collection;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.facet.FacetsConfig;
+
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.Storage;
-import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.facet.FacetsConfig;
-import org.bson.Document;
 
 /*-
  * #%L
@@ -42,7 +39,7 @@ import org.bson.Document;
 public class LuceneIndexConfiguration extends IndexConfiguration {
 	Storage storage;
 	
-	Analyzer defaultAnalyzer;
+	Analyzer analyzer;
 
 	@Getter
 	@Setter
@@ -71,12 +68,12 @@ public class LuceneIndexConfiguration extends IndexConfiguration {
 		return storage;
 	}
 	
-	public Analyzer getDefaultAnalyzer () {
-		return defaultAnalyzer;
+	public Analyzer getAnalyzer () {
+		return analyzer;
 	}
 	
-	public LuceneIndexConfiguration setDefaultAnalyzer (final Analyzer defaultAnalyzer) {
-		this.defaultAnalyzer = defaultAnalyzer;
+	public LuceneIndexConfiguration setAnalyzer (final Analyzer analyzer) {
+		this.analyzer = analyzer;
 		return this;
 	}
 }
