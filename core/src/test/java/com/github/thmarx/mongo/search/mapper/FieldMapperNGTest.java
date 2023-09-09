@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/EmptyTestNGTest.java to edit this template
  */
-package com.github.thmarx.mongo.serach.mapper;
+package com.github.thmarx.mongo.search.mapper;
 
 /*-
  * #%L
