@@ -88,8 +88,11 @@ public class Documents {
 			return;
 		}
 		if (value instanceof String stringValue) {
-			//document.add(new StringField(fc.getIndexFieldName(), stringValue, fc.isStored() ? Field.Store.YES : Field.Store.NO));
-			document.add(new TextField(fc.getIndexFieldName(), stringValue, Field.Store.NO));
+			if (fc.isKeyword()) {
+				document.add(new StringField(fc.getIndexFieldName(), stringValue, Field.Store.NO));
+			} else {
+				document.add(new TextField(fc.getIndexFieldName(), stringValue, Field.Store.NO));
+			}
 			if (fc.isStored()) {
 				document.add(new StoredField(fc.getIndexFieldName(), stringValue));
 			}

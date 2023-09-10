@@ -33,6 +33,19 @@ import lombok.experimental.SuperBuilder;
 @Getter
 public class LuceneFieldConfiguration extends FieldConfiguration<Document, org.apache.lucene.document.Document> {
 
+    /**
+     * Field value is stored.
+     * This is importend, if you like to have the value in the search result.
+     */
     @Builder.Default
 	private boolean stored = false;
+
+    /**
+     * Keyword fields are not tokenized. It's only relevant for fields holding text values.
+     * If the value should be used for full text search, do not set keyword to true.
+     * usage e.q. postalcodes or tags
+     * default = false
+     */
+    @Builder.Default
+    private boolean keyword = false;
 }

@@ -115,6 +115,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.fieldName("tags")
 				.indexFieldName("tags")
 				.stored(true)
+				.keyword(true)
 				.mapper(FieldMappers::getStringArrayFieldValue)
 				.extender((source, target) -> {
 					var values = FieldMappers.getStringArrayFieldValue("tags", source);
