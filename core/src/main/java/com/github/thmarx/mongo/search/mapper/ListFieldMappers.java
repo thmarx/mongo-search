@@ -32,27 +32,31 @@ import org.bson.Document;
  */
 public class ListFieldMappers extends BaseFieldMapper {
 
-	public static List<String> getStringArrayFieldValue (final String name, final Document document) {
+	public static List<String> toString (final String name, final Document document) {
 		return getArrayFieldValue(name, document, String.class);
 	}
 	
-	public static List<Date> getDateArrayFieldValue (final String name, final Document document) {
+	public static List<Date> toDate (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Date.class);
 	}
+
+	public static List<Boolean> toBoolean (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Boolean.class);
+	}
 	
-	public static List<Integer> getIntegerArrayFieldValue (final String name, final Document document) {
+	public static List<Integer> toInteger (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Integer.class);
 	}
 
-	public static List<Long> getLongArrayFieldValue (final String name, final Document document) {
+	public static List<Long> toLong (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Long.class);
 	}
 	
-	public static List<Float> getFloatArrayFieldValue (final String name, final Document document) {
+	public static List<Float> toFloat (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Float.class);
 	}
 	
-	public static List<Double> getDoubleArrayFieldValue (final String name, final Document document) {
+	public static List<Double> toDouble (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Double.class);
 	}
 

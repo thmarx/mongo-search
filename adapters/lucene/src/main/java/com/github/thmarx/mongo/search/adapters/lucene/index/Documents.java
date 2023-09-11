@@ -137,6 +137,12 @@ public class Documents {
 			if (fc.isStored()) {
 				document.add(new StoredField(fc.getIndexFieldName(), formattedValue));
 			}
+		} else if (value instanceof Boolean boolValue) {
+			document.add(new StringField(fc.getIndexFieldName(), Boolean.toString(boolValue), Field.Store.NO));
+			
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), Boolean.toString(boolValue)));
+			}
 		}
 	}
 

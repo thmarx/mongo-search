@@ -23,20 +23,20 @@ public class FieldMapperNGTest {
 		document.put("double", 45.5d);
 
 		Assertions.assertThat(
-			FieldMappers.getStringFieldValue("name", document)
+			FieldMappers.toString("name", document)
 		).isEqualTo("Hallo Leute");
 	
 		Assertions.assertThat(
-			FieldMappers.getIntegerFieldValue("int", document)
+			FieldMappers.toInteger("int", document)
 		).isEqualTo(45);
 		Assertions.assertThat(
-			FieldMappers.getFloatFieldValue("float", document)
+			FieldMappers.toFloat("float", document)
 		).isEqualTo(4.5f);
 		Assertions.assertThat(
-			FieldMappers.getLongFieldValue("long", document)
+			FieldMappers.toLong("long", document)
 		).isEqualTo(45l);
 		Assertions.assertThat(
-			FieldMappers.getDoubleFieldValue("double", document)
+			FieldMappers.toDouble("double", document)
 		).isEqualTo(45.5d);
 	}
 
@@ -49,7 +49,7 @@ public class FieldMapperNGTest {
 		emb.put("name", "Hallo ihr da draußen");
 		document.put("emb", emb);
 
-		String value = FieldMappers.getStringFieldValue("emb.name", document);
+		String value = FieldMappers.toString("emb.name", document);
 		Assertions.assertThat(value).isEqualTo("Hallo ihr da draußen");
 	}
 
@@ -58,7 +58,7 @@ public class FieldMapperNGTest {
 		Document document = new Document();
 		document.put("names", List.of("eins", "zwei"));
 
-		List<String> value = ListFieldMappers.getStringArrayFieldValue("names", document);
+		List<String> value = ListFieldMappers.toString("names", document);
 
 		Assertions.assertThat(value).containsExactly("eins", "zwei");
 	}
@@ -72,7 +72,7 @@ public class FieldMapperNGTest {
 		emb.put("names", List.of("eins", "zwei"));
 		document.put("emb", emb);
 
-		List<String> value = ListFieldMappers.getStringArrayFieldValue("emb.names", document);
+		List<String> value = ListFieldMappers.toString("emb.names", document);
 		Assertions.assertThat(value).containsExactly("eins", "zwei");
 	}
 
@@ -89,7 +89,7 @@ public class FieldMapperNGTest {
 		));
 		document.put("emb", emb);
 
-		List<String> value = ListFieldMappers.getStringArrayFieldValue("emb.cities.name", document);
+		List<String> value = ListFieldMappers.toString("emb.cities.name", document);
 		Assertions.assertThat(value).containsExactly("bochum", "essen", "dortmund");
 	}
 

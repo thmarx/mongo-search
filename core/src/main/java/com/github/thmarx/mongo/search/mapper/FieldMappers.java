@@ -10,31 +10,35 @@ import org.bson.Document;
  */
 public class FieldMappers extends BaseFieldMapper {
 
-	public static String getNullFieldValue (final String name, final Document document) {
+	public static String toNull (final String name, final Document document) {
 		return null;
 	}
 
-	public static String getStringFieldValue (final String name, final Document document) {
+	public static String toString (final String name, final Document document) {
 		return getFieldValue(name, document, String.class);
 	}
 	
-	public static Date getDataFieldValue (final String name, final Document document) {
+	public static Date toDate (final String name, final Document document) {
 		return getFieldValue(name, document, Date.class);
 	}
 
-	public static Integer getIntegerFieldValue (final String name, final Document document) {
+	public static Boolean toBoolean (final String name, final Document document) {
+		return getFieldValue(name, document, Boolean.class);
+	}
+
+	public static Integer toInteger (final String name, final Document document) {
 		return getFieldValue(name, document, Integer.class);
 	}
 
-	public static Long getLongFieldValue (final String name, final Document document) {
+	public static Long toLong (final String name, final Document document) {
 		return getFieldValue(name, document, Long.class);
 	}
 
-	public static Float getFloatFieldValue (final String name, final Document document) {
+	public static Float toFloat (final String name, final Document document) {
 		return getFieldValue(name, document, Float.class);
 	}
 
-	public static Double getDoubleFieldValue (final String name, final Document document) {
+	public static Double toDouble (final String name, final Document document) {
 		return getFieldValue(name, document, Double.class);
 	}
 

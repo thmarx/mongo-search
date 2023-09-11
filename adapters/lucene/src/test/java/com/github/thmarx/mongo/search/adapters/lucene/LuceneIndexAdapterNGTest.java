@@ -106,7 +106,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
 		configuration.setDocumentExtender((source, target) -> {
-			var values = ListFieldMappers.getStringArrayFieldValue("tags", source);
+			var values = ListFieldMappers.toString("tags", source);
 			if (values != null && !values.isEmpty()) {
 				values.forEach(value -> {
 					target.add(new SortedSetDocValuesFacetField("tags", value));
@@ -118,7 +118,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.fieldName("name")
 				.indexFieldName("name")
 				.stored(true)
-				.mapper(FieldMappers::getStringFieldValue)
+				.mapper(FieldMappers::toString)
 				.build());
 
 		facetConfig.setMultiValued("tags", true);
@@ -127,21 +127,21 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.indexFieldName("tags")
 				.stored(true)
 				.keyword(true)
-				.mapper(ListFieldMappers::getStringArrayFieldValue)
+				.mapper(ListFieldMappers::toString)
 				.build());
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
 				.defaultValue(() -> "K-Town")
 				.stored(true)
-				.mapper(ListFieldMappers::getStringArrayFieldValue)
+				.mapper(ListFieldMappers::toString)
 				.build());
 
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("ort.name")
 				.indexFieldName("cities")
 				.stored(true)
-				.mapper(FieldMappers::getStringFieldValue)
+				.mapper(FieldMappers::toString)
 				.build());
 
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
@@ -149,7 +149,13 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.indexFieldName("created")
 				.stored(true)
 				.dateFormatter(DateTimeFormatter.ISO_LOCAL_DATE)
-				.mapper(FieldMappers::getDataFieldValue)
+				.mapper(FieldMappers::toDate)
+				.build());
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+				.fieldName("draft")
+				.indexFieldName("draft")
+				.stored(true)
+				.mapper(FieldMappers::toBoolean)
 				.build());
 
 		luceneIndexAdapter = new LuceneIndexAdapter(configuration);
@@ -271,7 +277,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				"created", LocalDateTime.now()));
 
 		var indexedDateValue = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now());
-		
+
 		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 1);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
@@ -283,6 +289,38 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 			Assertions.assertThat(doc.get("_id")).isNotNull();
 
 			Assertions.assertThat(doc.get("created")).isNotNull().isEqualTo(indexedDateValue);
+		} finally {
+			reader.close();
+		}
+	}
+
+	@Test
+	public void test_boolean() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"draft", false));
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"draft", true));
+		
+		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
+
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		try {
+
+			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
+			Assertions.assertThat(doc.get("draft")).isNotNull().isEqualTo("false");
+
+			doc = reader.storedFields().document(1);
+			Assertions.assertThat(doc.get("draft")).isNotNull().isEqualTo("true");
 		} finally {
 			reader.close();
 		}
