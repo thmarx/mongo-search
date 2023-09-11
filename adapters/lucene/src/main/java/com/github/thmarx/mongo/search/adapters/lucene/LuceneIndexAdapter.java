@@ -62,7 +62,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 	private final Documents documentHelper;
 
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-	
+
 	public LuceneIndexAdapter(final LuceneIndexConfiguration configuration) {
 		super(configuration);
 
@@ -71,19 +71,23 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 	@Override
 	public void indexDocument(String database, String collection, Document document) throws IOException {
-		org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-		doc.add(new StringField("_id", document.getObjectId("_id").toString(), Field.Store.YES));
-		doc.add(new StringField("_collection", collection, Field.Store.YES));
-		doc.add(new StringField("_database", collection, Field.Store.YES));
+		var uid = document.getObjectId("_id").toString();
+		
+		Query query = new BooleanQuery.Builder()
+				.add(new TermQuery(new Term("_id", uid)), BooleanClause.Occur.MUST)
+				.add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST)
+				.add(new TermQuery(new Term("_database", database)), BooleanClause.Occur.MUST)
+				.build();
+		luceneIndex.deleteDocuments(query);
 
+		org.apache.lucene.document.Document doc = documentHelper.build(database, collection, uid, document);
 		luceneIndex.index(doc);
 	}
 
-	
 	public void commit() {
 		luceneIndex.commit();
 	}
-	
+
 	public LuceneIndex getIndex() {
 		return luceneIndex;
 	}
@@ -109,7 +113,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 		scheduler.scheduleWithFixedDelay(() -> {
 			luceneIndex.commit();
 		}, 1, 1, TimeUnit.SECONDS);
-		
+
 		queueWorker = new PausableThread(true) {
 			@Override
 			public void update() {
@@ -121,7 +125,8 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_id", index.uid())), BooleanClause.Occur.MUST)
-								.add(new TermQuery(new Term("_collection", index.collection())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_collection", index.collection())),
+										BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_database", index.database())), BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
@@ -130,18 +135,21 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 					} else if (command instanceof DeleteCommand delete) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_id", delete.uid())), BooleanClause.Occur.MUST)
-								.add(new TermQuery(new Term("_collection", delete.collection())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_collection", delete.collection())),
+										BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_database", delete.database())), BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
 					} else if (command instanceof DropCollectionCommand dropCollection) {
 						Query query = new BooleanQuery.Builder()
-								.add(new TermQuery(new Term("_collection", dropCollection.collection())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_collection", dropCollection.collection())),
+										BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
 					} else if (command instanceof DropDatabaseCommand dropDatabase) {
 						Query query = new BooleanQuery.Builder()
-								.add(new TermQuery(new Term("_database", dropDatabase.database())), BooleanClause.Occur.MUST)
+								.add(new TermQuery(new Term("_database", dropDatabase.database())),
+										BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
 					}

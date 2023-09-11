@@ -49,30 +49,34 @@ public class Documents {
 
 	private final LuceneIndexConfiguration configuration;
 
-	public Document build(final InsertCommand command) {
+	public Document build(final String database, final String collection, final String uid, final org.bson.Document document) {
 		var doc = new Document();
 
-		doc.add(new StringField("_id", command.uid(), Field.Store.YES));
-		doc.add(new StringField("_collection", command.collection(), Field.Store.YES));
-		doc.add(new StringField("_database", command.database(), Field.Store.YES));
+		doc.add(new StringField("_id", uid, Field.Store.YES));
+		doc.add(new StringField("_collection", collection, Field.Store.YES));
+		doc.add(new StringField("_database", database, Field.Store.YES));
 
-		if (configuration.hasFieldConfigurations(command.collection())) {
-			var fieldConfigs = configuration.getFieldConfigurations(command.collection());
+		if (configuration.hasFieldConfigurations(collection)) {
+			var fieldConfigs = configuration.getFieldConfigurations(collection);
 			fieldConfigs.forEach((fc) -> {
-				var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
+				var value = fc.getMapper().getFieldValue(fc.getFieldName(), document);
 				if (value instanceof String stringValue) {
 					addField(stringValue, doc, fc);
 				} else if (value instanceof List<?> listValue && !listValue.isEmpty()) {
 					addListField(listValue, doc, fc);
 				}
 				if (fc.getExtender() != null) {
-					fc.getExtender().accept(command.document(), doc);
+					fc.getExtender().accept(document, doc);
 				}
 
 			});
 		}
 
 		return doc;
+	}
+	public Document build(final InsertCommand command) {
+
+		return build(command.database(), command.collection(), command.uid(), command.document());
 	}
 
 	private void addListField(List<?> value, Document document, LuceneFieldConfiguration fc) {
