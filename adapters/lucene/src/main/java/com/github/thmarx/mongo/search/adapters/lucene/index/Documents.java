@@ -1,9 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
@@ -67,10 +65,10 @@ public class Documents {
 					value = fc.getDefaultValue().get();
 				}
 
-				if (value instanceof String stringValue) {
-					addField(stringValue, doc, fc);
-				} else if (value instanceof List<?> listValue && !listValue.isEmpty()) {
+				if (value instanceof List<?> listValue && !listValue.isEmpty()) {
 					addListField(listValue, doc, fc);
+				} else if (value != null)  {
+					addField(value, doc, fc);
 				}
 			});
 		}
@@ -126,6 +124,18 @@ public class Documents {
 			document.add(new DoublePoint(fc.getIndexFieldName(), numberValue));
 			if (fc.isStored()) {
 				document.add(new StoredField(fc.getIndexFieldName(), numberValue));
+			}
+		} else if (value instanceof Date dateValue) {
+			String formattedValue;
+			if (fc.getDateFormatter() != null) {
+				formattedValue = fc.getDateFormatter().format(dateValue.toInstant().atZone(ZoneId.of("UTC")));
+			} else {
+				formattedValue = configuration.getDefaultDateFormatter().format(dateValue.toInstant().atZone(ZoneId.of("UTC")));
+			}
+			document.add(new StringField(fc.getIndexFieldName(), formattedValue, Field.Store.NO));
+			
+			if (fc.isStored()) {
+				document.add(new StoredField(fc.getIndexFieldName(), formattedValue));
 			}
 		}
 	}

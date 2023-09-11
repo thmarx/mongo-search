@@ -3,6 +3,11 @@ package com.github.thmarx.mongo.search.adapters.lucene;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +137,21 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.mapper(ListFieldMappers::getStringArrayFieldValue)
 				.build());
 
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+				.fieldName("ort.name")
+				.indexFieldName("cities")
+				.stored(true)
+				.mapper(FieldMappers::getStringFieldValue)
+				.build());
+
+		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+				.fieldName("created")
+				.indexFieldName("created")
+				.stored(true)
+				.dateFormatter(DateTimeFormatter.ISO_LOCAL_DATE)
+				.mapper(FieldMappers::getDataFieldValue)
+				.build());
+
 		luceneIndexAdapter = new LuceneIndexAdapter(configuration);
 		luceneIndexAdapter.open();
 
@@ -238,6 +258,72 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	}
 
 	@Test
+	public void test_date() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"created", LocalDateTime.now()));
+
+		var indexedDateValue = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now());
+		
+		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 1);
+
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		try {
+
+			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
+
+			Assertions.assertThat(doc.get("_collection")).isNotNull();
+			Assertions.assertThat(doc.get("_id")).isNotNull();
+
+			Assertions.assertThat(doc.get("created")).isNotNull().isEqualTo(indexedDateValue);
+		} finally {
+			reader.close();
+		}
+	}
+
+	@Test
+	public void test_combine_fields() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"tags", List.of("eins", "zwei"),
+				"cities", List.of(
+						Map.of("name", "Bochum"),
+						Map.of("name", "Dortmund"),
+						Map.of("name", "Essen")),
+				"ort", Map.of("name", "Kaiserslautern")));
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		try {
+
+			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
+
+			Assertions.assertThat(doc.get("cities")).isNotNull();
+			Assertions.assertThat(doc.getValues("cities"))
+					.isNotNull()
+					.hasSize(4)
+					.containsExactlyInAnyOrder("Bochum", "Essen", "Dortmund", "Kaiserslautern");
+		} finally {
+			reader.close();
+		}
+	}
+
+	@Test
 	public void test_default_value() throws IOException, InterruptedException {
 
 		Thread.sleep(2000);
@@ -248,8 +334,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		insertDocument("dokumente", Map.of(
 				"name", "thorsten",
-				"tags", List.of("eins", "zwei")
-		));
+				"tags", List.of("eins", "zwei")));
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
 

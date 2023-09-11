@@ -1,6 +1,6 @@
 package com.github.thmarx.mongo.search.mapper;
 
-import java.util.List;
+import java.util.Date;
 
 import org.bson.Document;
 
@@ -18,6 +18,10 @@ public class FieldMappers extends BaseFieldMapper {
 		return getFieldValue(name, document, String.class);
 	}
 	
+	public static Date getDataFieldValue (final String name, final Document document) {
+		return getFieldValue(name, document, Date.class);
+	}
+
 	public static Integer getIntegerFieldValue (final String name, final Document document) {
 		return getFieldValue(name, document, Integer.class);
 	}

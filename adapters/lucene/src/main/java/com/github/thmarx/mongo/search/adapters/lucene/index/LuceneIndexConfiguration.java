@@ -1,5 +1,6 @@
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -47,6 +48,10 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 	FacetsConfig facetsConfig;
 	
 	final MultiMap<String, LuceneFieldConfiguration> fieldConfigurations = new MultiMap<>();
+
+	@Getter
+	@Setter
+	DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
 	
 	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final LuceneFieldConfiguration fieldConfig) {
 		fieldConfigurations.put(collection, fieldConfig);

@@ -1,5 +1,7 @@
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
+import java.time.format.DateTimeFormatter;
+
 /*-
  * #%L
  * monog-search-adapters-lucene
@@ -26,6 +28,7 @@ import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 
@@ -48,4 +51,11 @@ public class LuceneFieldConfiguration extends FieldConfiguration<Document, org.a
      */
     @Builder.Default
     private boolean keyword = false;
+
+    /**
+     * Formatter to create a string representation of a date object.
+     * if nothing is provided here the defaultDateFormatter is used
+     * @see LuceneIndexConfiguration.defaultDateFormatter
+     */
+    private DateTimeFormatter dateFormatter;
 }

@@ -22,6 +22,7 @@ package com.github.thmarx.mongo.search.mapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import org.bson.Document;
 
@@ -35,6 +36,9 @@ public class ListFieldMappers extends BaseFieldMapper {
 		return getArrayFieldValue(name, document, String.class);
 	}
 	
+	public static List<Date> getDateArrayFieldValue (final String name, final Document document) {
+		return getArrayFieldValue(name, document, Date.class);
+	}
 	
 	public static List<Integer> getIntegerArrayFieldValue (final String name, final Document document) {
 		return getArrayFieldValue(name, document, Integer.class);
