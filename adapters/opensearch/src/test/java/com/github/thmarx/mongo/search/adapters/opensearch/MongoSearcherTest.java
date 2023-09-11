@@ -27,6 +27,7 @@ import com.mongodb.client.model.Filters;
 import com.github.thmarx.mongo.search.index.MongoSearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
+import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Updates;
 import java.io.IOException;
@@ -145,13 +146,13 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("tags")
 				.indexFieldName("tags")
-				.mapper(FieldMappers::getStringArrayFieldValue)
+				.mapper(ListFieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
-				.mapper(FieldMappers::getStringArrayFieldValue)
+				.mapper(ListFieldMappers::getStringArrayFieldValue)
 				.build()
 		);
 

@@ -3,6 +3,7 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
 import java.util.Collection;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.facet.FacetsConfig;
 
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.Storage;
@@ -36,7 +37,7 @@ import lombok.Setter;
  *
  * @author t.marx
  */
-public class LuceneIndexConfiguration extends IndexConfiguration {
+public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Document, Document> {
 	Storage storage;
 	
 	Analyzer analyzer;

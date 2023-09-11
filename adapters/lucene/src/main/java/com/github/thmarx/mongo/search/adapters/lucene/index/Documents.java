@@ -60,16 +60,23 @@ public class Documents {
 			var fieldConfigs = configuration.getFieldConfigurations(collection);
 			fieldConfigs.forEach((fc) -> {
 				var value = fc.getMapper().getFieldValue(fc.getFieldName(), document);
+
+				if (
+					value == null 
+					|| (value instanceof List<?> listValue && listValue.isEmpty())) {
+					value = fc.getDefaultValue().get();
+				}
+
 				if (value instanceof String stringValue) {
 					addField(stringValue, doc, fc);
 				} else if (value instanceof List<?> listValue && !listValue.isEmpty()) {
 					addListField(listValue, doc, fc);
 				}
-				if (fc.getExtender() != null) {
-					fc.getExtender().accept(document, doc);
-				}
-
 			});
+		}
+
+		if (configuration.getDocumentExtender() != null) {
+			configuration.getDocumentExtender().accept(document, doc);
 		}
 
 		return doc;

@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
 import com.github.thmarx.mongo.search.mapper.FieldMapper;
+
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /*-
  * #%L
@@ -40,5 +42,5 @@ public class FieldConfiguration<SD, TD> {
 	private final FieldMapper<?> mapper;
 	
 	@Builder.Default
-	private BiConsumer<SD, TD> extender = (source, target) -> {};
+	private Supplier<?> defaultValue = () -> null;
 }

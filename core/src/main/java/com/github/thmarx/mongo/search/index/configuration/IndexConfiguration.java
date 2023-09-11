@@ -4,6 +4,12 @@
  */
 package com.github.thmarx.mongo.search.index.configuration;
 
+import java.util.function.BiConsumer;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
 /*-
  * #%L
  * mongo-search-core
@@ -28,6 +34,8 @@ package com.github.thmarx.mongo.search.index.configuration;
  *
  * @author t.marx
  */
-public class IndexConfiguration {
-	
+public class IndexConfiguration<SD, TD> {
+    @Getter
+    @Setter
+	private BiConsumer<SD, TD> documentExtender = (source, target) -> {};
 }

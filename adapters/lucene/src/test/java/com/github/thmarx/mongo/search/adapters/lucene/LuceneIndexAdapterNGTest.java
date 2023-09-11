@@ -39,8 +39,8 @@ import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneFieldConfigura
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
 import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
+import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
 /*-
  * #%L
  * mongo-search-index
@@ -77,7 +77,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	private LuceneIndexAdapter luceneIndexAdapter;
 
 	private FacetsConfig facetConfig = new FacetsConfig();
-	
+
 	@BeforeMethod
 	public void setup() throws IOException, InterruptedException {
 
@@ -93,22 +93,28 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		facetConfig.setMultiValued("tags", true);
 		LuceneIndexConfiguration configuration = new LuceneIndexConfiguration();
-		
+
 		PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
-			Map.of("name", new GermanAnalyzer())
-		);
+				Map.of("name", new GermanAnalyzer()));
 		configuration.setAnalyzer(perFieldAnalyzerWrapper);
 
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
+		configuration.setDocumentExtender((source, target) -> {
+			var values = ListFieldMappers.getStringArrayFieldValue("tags", source);
+			if (values != null && !values.isEmpty()) {
+				values.forEach(value -> {
+					target.add(new SortedSetDocValuesFacetField("tags", value));
+				});
+			}
+		});
 
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
 				.stored(true)
 				.mapper(FieldMappers::getStringFieldValue)
-				.build()
-		);
+				.build());
 
 		facetConfig.setMultiValued("tags", true);
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
@@ -116,24 +122,15 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.indexFieldName("tags")
 				.stored(true)
 				.keyword(true)
-				.mapper(FieldMappers::getStringArrayFieldValue)
-				.extender((source, target) -> {
-					var values = FieldMappers.getStringArrayFieldValue("tags", source);
-					if (values != null && !values.isEmpty()) {
-						values.forEach(value -> {
-							target.add(new SortedSetDocValuesFacetField("tags", value));
-						});
-					}
-				})
-				.build()
-		);
+				.mapper(ListFieldMappers::getStringArrayFieldValue)
+				.build());
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
+				.defaultValue(() -> "K-Town")
 				.stored(true)
-				.mapper(FieldMappers::getStringArrayFieldValue)
-				.build()
-		);
+				.mapper(ListFieldMappers::getStringArrayFieldValue)
+				.build());
 
 		luceneIndexAdapter = new LuceneIndexAdapter(configuration);
 		luceneIndexAdapter.open();
@@ -210,9 +207,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				"cities", List.of(
 						Map.of("name", "Bochum"),
 						Map.of("name", "Dortmund"),
-						Map.of("name", "Essen")
-				)
-		));
+						Map.of("name", "Essen"))));
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
 
@@ -243,7 +238,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	}
 
 	@Test
-	public void test_extender() throws IOException, InterruptedException {
+	public void test_default_value() throws IOException, InterruptedException {
 
 		Thread.sleep(2000);
 
@@ -255,10 +250,39 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				"name", "thorsten",
 				"tags", List.of("eins", "zwei")
 		));
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		try {
+
+			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
+
+			Assertions.assertThat(doc.get("cities")).isNotNull();
+			Assertions.assertThat(doc.getValues("cities"))
+					.isNotNull()
+					.hasSize(1)
+					.containsExactlyInAnyOrder("K-Town");
+		} finally {
+			reader.close();
+		}
+	}
+
+	@Test
+	public void test_extender() throws IOException, InterruptedException {
+
+		Thread.sleep(2000);
+
+		luceneIndexAdapter.commit();
+
+		assertCollectionSize("dokumente", 0);
+
+		insertDocument("dokumente", Map.of(
+				"name", "thorsten",
+				"tags", List.of("eins", "zwei")));
 		insertDocument("dokumente", Map.of(
 				"name", "lara",
-				"tags", List.of("drei", "zwei")
-		));
+				"tags", List.of("drei", "zwei")));
 
 		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
 
@@ -275,15 +299,18 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
 		try {
 			/*
-			SortedSetDocValues sortedSetValues = MultiDocValues.getSortedSetValues(searcher.getIndexReader(), fieldName);
-			if (sortedSetValues == null || sortedSetValues.nextDoc() == SortedSetDocValues.NO_MORE_DOCS) {
-				return Collections.emptySet();
-			}
+			 * SortedSetDocValues sortedSetValues =
+			 * MultiDocValues.getSortedSetValues(searcher.getIndexReader(), fieldName);
+			 * if (sortedSetValues == null || sortedSetValues.nextDoc() ==
+			 * SortedSetDocValues.NO_MORE_DOCS) {
+			 * return Collections.emptySet();
+			 * }
 			 */
 
 			Set<String> fieldValues = new HashSet<>();
 
-			SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(searcher.getIndexReader(), facetConfig);
+			SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(searcher.getIndexReader(),
+					facetConfig);
 
 			FacetsCollector collector = new FacetsCollector();
 
