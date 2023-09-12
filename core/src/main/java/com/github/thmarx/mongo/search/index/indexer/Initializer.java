@@ -66,16 +66,13 @@ public class Initializer {
 		database.getCollection(collectionName).find().forEach(doc -> {
 			try {
 				indexDocument(collectionName, doc);
-			} catch (IOException ex) {
+			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
 		});
 	}
 	
 	private void indexDocument (final String collection, final Document document) throws IOException {
-		
 		indexAdapter.indexDocument(database.getName(), collection, document);
-		
-
 	}
 }

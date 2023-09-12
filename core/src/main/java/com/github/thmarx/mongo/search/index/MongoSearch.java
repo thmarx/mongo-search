@@ -27,6 +27,9 @@ package com.github.thmarx.mongo.search.index;
 import com.github.thmarx.mongo.trigger.Event;
 import com.github.thmarx.mongo.trigger.MongoTriggers;
 import com.mongodb.client.MongoDatabase;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.github.thmarx.mongo.search.index.indexer.Initializer;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
@@ -39,6 +42,7 @@ import java.util.List;
  *
  * @author t.marx
  */
+@Slf4j
 public class MongoSearch implements AutoCloseable {
 
 	IndexAdapter indexAdapter;
@@ -86,7 +90,9 @@ public class MongoSearch implements AutoCloseable {
 		
 		mongoTriggers.open(database);
 		
+		log.debug("start initalizing");
 		initializer.initialize((Void) -> {
+			log.debug("index initalized, start queue working");
 			indexAdapter.startQueueWorker();
 		});
 

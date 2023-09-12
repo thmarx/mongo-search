@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.thmarx.mongo.search</groupId>
 		<artifactId>mongo-search</artifactId>
-		<version>1.0</version>
+		<version>0.1</version>
 	</parent>
 	<artifactId>mongo-search-core</artifactId>
 	<name>mongo-search-core</name>
@@ -25,6 +25,10 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 	</dependencies>
 </project>

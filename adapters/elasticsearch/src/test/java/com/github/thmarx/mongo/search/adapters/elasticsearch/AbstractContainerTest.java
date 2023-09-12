@@ -25,10 +25,30 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  */
 
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+
+import java.time.Duration;
+
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.client.RestClient;
 
 /**
  *
@@ -38,24 +58,56 @@ public class AbstractContainerTest {
 
 	protected ElasticsearchContainer elasticSearchContainer;
 	protected MongoDBContainer mongdbContainer;
+	protected MongoClient mongoClient;
 
-	@BeforeTest
+	RestClient restClient;
+	ElasticsearchTransport transport;
+	protected ElasticsearchClient esClient;
+
+	@BeforeClass
 	public void up() {
 		elasticSearchContainer = new ElasticsearchContainer(DockerImageName.parse(
-				"docker.elastic.co/elasticsearch/elasticsearch:8.9.1-amd64"
-		));
+				"docker.elastic.co/elasticsearch/elasticsearch:8.9.1-amd64"));
+		elasticSearchContainer.withStartupTimeout(Duration.ofSeconds(120));
+		elasticSearchContainer.withLogConsumer((frame) -> System.out.println(frame.getUtf8StringWithoutLineEnding()));
 		elasticSearchContainer.start();
-		
+
 		mongdbContainer = new MongoDBContainer(DockerImageName.parse(
-				"mongo:6.0.9"
-		));
+				"mongo:6.0.9"));
 		mongdbContainer.start();
+		mongoClient = MongoClients.create(mongdbContainer.getConnectionString());
+
+		String protocol = elasticSearchContainer.caCertAsBytes().isPresent() ? "https://" : "http://";
+
+		restClient = RestClient
+				.builder(HttpHost.create(protocol + elasticSearchContainer.getHttpHostAddress()))
+				.setHttpClientConfigCallback((clientBuilder) -> {
+
+					if (elasticSearchContainer.caCertAsBytes().isPresent()) {
+						clientBuilder.setSSLContext(elasticSearchContainer.createSslContextFromCa());
+					}
+
+					final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+					UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("elastic", ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
+					credentialsProvider.setCredentials(AuthScope.ANY, credentials);
+
+					return clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+				})
+				.build();
+
+// Create the transport with a Jackson mapper
+		transport = new RestClientTransport(
+				restClient, new JacksonJsonpMapper());
+
+// And create the API client
+		esClient = new ElasticsearchClient(transport);
 	}
 
-	@AfterTest
+	@AfterClass
 	public void down() {
+		esClient.shutdown();
 		elasticSearchContainer.stop();
-		
+		mongoClient.close();
 		mongdbContainer.stop();
 	}
 }

@@ -2,7 +2,7 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
 
 /*-
  * #%L
- * mongo-search-index
+ * monog-search-adapters-elasticsearch
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -19,44 +19,33 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  * limitations under the License.
  * #L%
  */
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.CountResponse;
-import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
-import com.github.thmarx.mongo.search.mapper.FieldMappers;
-import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.model.Updates;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.elasticsearch.client.RestClient;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.github.thmarx.mongo.search.index.MongoSearch;
+import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
+import com.github.thmarx.mongo.search.mapper.FieldMappers;
+import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+
+import co.elastic.clients.elasticsearch.core.CountResponse;
+import co.elastic.clients.elasticsearch.core.GetResponse;
 
 /**
  *
@@ -64,65 +53,19 @@ import org.testng.annotations.Test;
  */
 public class MongoSearcherTest extends AbstractContainerTest {
 
-	static String PASSWORD = "AgY7KUJwb5M*e36Y3=gb";
-
-	MongoClient client;
-
 	MongoSearch mongoSearch;
 
 	private MongoDatabase database;
 
 	private ElasticsearchIndexAdapter indexAdapter;
 
-	RestClient restClient;
-	ElasticsearchTransport transport;
-	ElasticsearchClient esClient;
-
-	private final static String COLLECTION_DOKUMENTE = "dokumente";
-
-	@BeforeClass
-	public void setup() throws IOException {
-
-		String protocol = elasticSearchContainer.caCertAsBytes().isPresent() ? "https://" : "http://";
-
-		restClient = RestClient
-				.builder(HttpHost.create(protocol + elasticSearchContainer.getHttpHostAddress()))
-				.setHttpClientConfigCallback((clientBuilder) -> {
-
-					if (elasticSearchContainer.caCertAsBytes().isPresent()) {
-						clientBuilder.setSSLContext(elasticSearchContainer.createSslContextFromCa());
-					}
-
-					final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-					UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("elastic", ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
-					credentialsProvider.setCredentials(AuthScope.ANY, credentials);
-
-					return clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-				})
-				.build();
-
-// Create the transport with a Jackson mapper
-		transport = new RestClientTransport(
-				restClient, new JacksonJsonpMapper());
-
-// And create the API client
-		esClient = new ElasticsearchClient(transport);
-
-		String connectionString = System.getenv("MONGO_SEARCH_CONNECTIONSTRING");
-		//client = MongoClients.create(connectionString);
-		client = MongoClients.create(mongdbContainer.getConnectionString());
-
-		database = client.getDatabase("search");
-	}
-
-	@AfterClass
-	public void shutdown() throws Exception {
-		client.close();
-		esClient.shutdown();
-	}
+	private final static String COLLECTION_DOKUMENTE = "dokumente";	
 
 	@BeforeMethod
 	public void cleanup() throws IOException {
+
+		database = mongoClient.getDatabase("search");
+
 		if (esClient.indices().exists((fn) -> fn.index(COLLECTION_DOKUMENTE)).value()) {
 			esClient.indices().delete((b) -> b.index(COLLECTION_DOKUMENTE));
 		}

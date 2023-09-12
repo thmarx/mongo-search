@@ -65,6 +65,7 @@ import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
  * limitations under the License.
  * #L%
  */
+
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;

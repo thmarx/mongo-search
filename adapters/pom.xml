@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.github.thmarx.mongo.search</groupId>
         <artifactId>mongo-search</artifactId>
-        <version>1.0</version>
+        <version>0.1</version>
     </parent>
     <artifactId>mongo-search-adapters</artifactId>
     <packaging>pom</packaging>
