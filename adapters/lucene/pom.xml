@@ -6,7 +6,7 @@
 		<artifactId>mongo-search-adapters</artifactId>
 		<version>0.1</version>
 	</parent>
-	<artifactId>monog-search-adapters-lucene</artifactId>
+	<artifactId>mongo-search-adapters-lucene</artifactId>
 	<packaging>jar</packaging>
 	<properties>
 		<lucene.version>9.7.0</lucene.version>

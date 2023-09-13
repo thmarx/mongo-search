@@ -8,7 +8,7 @@
 		<artifactId>mongo-search-adapters</artifactId>
 		<version>0.1</version>
 	</parent>
-	<artifactId>monog-search-adapters-opensearch</artifactId>
+	<artifactId>mongo-search-adapters-opensearch</artifactId>
 	<packaging>jar</packaging>
 	<properties>
 		<opensearch-client.version>2.6.0</opensearch-client.version>
