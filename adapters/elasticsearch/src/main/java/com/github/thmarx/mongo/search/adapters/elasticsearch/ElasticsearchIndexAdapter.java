@@ -65,7 +65,9 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 
 	@Override
 	public void indexDocument(String database, String collection, Document document) throws IOException {
-
+	}
+	@Override
+	public void clearCollection(String database, String collection) throws IOException {
 	}
 
 	public void commit() {
@@ -81,6 +83,11 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 	@Override
 	public void startQueueWorker() {
 		this.queueWorker.unpause();
+	}
+
+	@Override
+	public void pauseQueueWorker() {
+		this.queueWorker.pause();
 	}
 
 	public void open(ElasticsearchClient esClient) throws IOException {

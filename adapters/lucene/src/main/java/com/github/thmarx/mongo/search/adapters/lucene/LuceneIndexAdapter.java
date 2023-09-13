@@ -84,6 +84,16 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 		luceneIndex.index(doc);
 	}
 
+	@Override
+	public void clearCollection(String database, String collection) throws IOException {
+		
+		Query query = new BooleanQuery.Builder()
+				.add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST)
+				.add(new TermQuery(new Term("_database", database)), BooleanClause.Occur.MUST)
+				.build();
+		luceneIndex.deleteDocuments(query);
+	}
+
 	public void commit() {
 		luceneIndex.commit();
 	}
@@ -103,6 +113,11 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 	@Override
 	public void startQueueWorker() {
 		this.queueWorker.unpause();
+	}
+
+	@Override
+	public void pauseQueueWorker() {
+		this.queueWorker.pause();
 	}
 
 	public void open() throws IOException {

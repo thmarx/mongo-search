@@ -31,6 +31,7 @@ import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
+import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.indexer.Initializer;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
 import com.github.thmarx.mongo.trigger.CollectionTrigger;
@@ -49,13 +50,13 @@ public class MongoSearch implements AutoCloseable {
 
 	IndexAdapter indexAdapter;
 
-	Initializer initializer;
-
 	Updater updater;
 
 	MongoTriggers mongoTriggers;
 
 	ExecutorService executorService;
+
+	MongoDatabase database;
 
 	public MongoSearch() {
 		this.executorService = Executors.newSingleThreadExecutor();
@@ -72,13 +73,20 @@ public class MongoSearch implements AutoCloseable {
 		indexAdapter.close();
 	}
 
+	public void execute (final Command command) {
+		executorService.execute(() -> {
+			try {
+				command.execute(indexAdapter, database);
+			} catch (Exception e) {
+				log.error("error executing command", e);
+			}
+		});
+	}
+
 	public void open(IndexAdapter indexAdapter, MongoDatabase database, List<String> collections) throws IOException {
 		this.indexAdapter = indexAdapter;
+		this.database = database;
 
-		initializer = new Initializer(indexAdapter, database, collections, (Void) -> {
-			log.debug("index initalized, start queue working");
-			indexAdapter.startQueueWorker();
-		});
 		updater = new Updater(indexAdapter, collections);
 
 		mongoTriggers = new MongoTriggers();
@@ -105,8 +113,6 @@ public class MongoSearch implements AutoCloseable {
 
 		mongoTriggers.open(database);
 
-		log.debug("start initalizing");
-		executorService.submit(initializer);
-
+		indexAdapter.startQueueWorker();
 	}
 }

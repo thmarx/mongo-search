@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.github.thmarx.mongo.search.adapters.opensearch;
 
 import java.io.IOException;
@@ -69,6 +65,11 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 
 	}
 
+	@Override
+	public void clearCollection(String database, String collection) throws IOException {
+
+	}
+
 	public void commit() {
 	}
 
@@ -82,6 +83,11 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 	@Override
 	public void startQueueWorker() {
 		this.queueWorker.unpause();
+	}
+
+	@Override
+	public void pauseQueueWorker() {
+		this.queueWorker.pause();
 	}
 
 	public void open(OpenSearchClient osClient) throws IOException {
