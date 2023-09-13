@@ -27,11 +27,11 @@ import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
 import com.github.thmarx.mongo.search.adapters.lucene.index.Documents;
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndex;
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
-import com.github.thmarx.mongo.search.index.commands.Command;
-import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
-import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
-import com.github.thmarx.mongo.search.index.commands.DropDatabaseCommand;
-import com.github.thmarx.mongo.search.index.commands.InsertCommand;
+import com.github.thmarx.mongo.search.index.messages.Message;
+import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
+import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
+import com.github.thmarx.mongo.search.index.messages.DropDatabaseMessage;
+import com.github.thmarx.mongo.search.index.messages.InsertMessage;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
 import java.util.List;
@@ -118,9 +118,9 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 			@Override
 			public void update() {
 				try {
-					Command command = getCommandQueue().take();
+					Message command = getMessageQueue().take();
 
-					if (command instanceof InsertCommand index) {
+					if (command instanceof InsertMessage index) {
 						org.apache.lucene.document.Document doc = documentHelper.build(index);
 
 						Query query = new BooleanQuery.Builder()
@@ -132,7 +132,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 						luceneIndex.deleteDocuments(query);
 
 						luceneIndex.index(doc);
-					} else if (command instanceof DeleteCommand delete) {
+					} else if (command instanceof DeleteMessage delete) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_id", delete.uid())), BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_collection", delete.collection())),
@@ -140,13 +140,13 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 								.add(new TermQuery(new Term("_database", delete.database())), BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
-					} else if (command instanceof DropCollectionCommand dropCollection) {
+					} else if (command instanceof DropCollectionMessage dropCollection) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_collection", dropCollection.collection())),
 										BooleanClause.Occur.MUST)
 								.build();
 						luceneIndex.deleteDocuments(query);
-					} else if (command instanceof DropDatabaseCommand dropDatabase) {
+					} else if (command instanceof DropDatabaseMessage dropDatabase) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_database", dropDatabase.database())),
 										BooleanClause.Occur.MUST)

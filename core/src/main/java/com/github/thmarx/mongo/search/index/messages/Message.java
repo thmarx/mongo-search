@@ -1,4 +1,9 @@
-package com.github.thmarx.mongo.search.index.commands;
+
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.github.thmarx.mongo.search.index.messages;
 
 /*-
  * #%L
@@ -24,6 +29,6 @@ package com.github.thmarx.mongo.search.index.commands;
  *
  * @author t.marx
  */
-public record DropDatabaseCommand (String database) implements Command {
+public interface Message {
 	
 }

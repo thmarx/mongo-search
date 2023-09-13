@@ -38,11 +38,11 @@ import org.opensearch.client.opensearch.core.IndexResponse;
  * #L%
  */
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
-import com.github.thmarx.mongo.search.index.commands.Command;
-import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
-import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
-import com.github.thmarx.mongo.search.index.commands.InsertCommand;
-import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
+import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
+import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
+import com.github.thmarx.mongo.search.index.messages.InsertMessage;
+import com.github.thmarx.mongo.search.index.messages.Message;
+import com.github.thmarx.mongo.search.index.messages.UpdateMessage;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 
 /**
@@ -92,15 +92,15 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 			@Override
 			public void update() {
 				try {
-					Command command = getCommandQueue().take();
+					Message command = getMessageQueue().take();
 
-					if (command instanceof InsertCommand indexCommand) {
+					if (command instanceof InsertMessage indexCommand) {
 						index(indexCommand);
-					} else if (command instanceof DeleteCommand deleteCommand) {
+					} else if (command instanceof DeleteMessage deleteCommand) {
 						delete(deleteCommand);
-					} else if (command instanceof UpdateCommand updateCommand) {
+					} else if (command instanceof UpdateMessage updateCommand) {
 						OpensearchIndexAdapter.this.update(updateCommand);
-					} else if (command instanceof DropCollectionCommand dropCollectionCommand) {
+					} else if (command instanceof DropCollectionMessage dropCollectionCommand) {
 						dropCollection(dropCollectionCommand);
 					}
 
@@ -112,7 +112,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		queueWorkerThread.start();
 	}
 
-	private void index(InsertCommand command) {
+	private void index(InsertMessage command) {
 		try {
 
 			Map<String, Object> document = new HashMap<>();
@@ -136,7 +136,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		}
 	}
 	
-	private void update(UpdateCommand command) {
+	private void update(UpdateMessage command) {
 		try {
 
 			Map<String, Object> document = new HashMap<>();
@@ -161,7 +161,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		}
 	}
 
-	private void delete(DeleteCommand command) {
+	private void delete(DeleteMessage command) {
 		try {
 
 			DeleteResponse response = osClient.delete(i -> i
@@ -177,7 +177,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 	 * For OpenSearch the collection will not be dropped!
 	 * @param command
 	 */
-	private void dropCollection(DropCollectionCommand command) {
+	private void dropCollection(DropCollectionMessage command) {
 		try {
 
 			boolean exists = osClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();

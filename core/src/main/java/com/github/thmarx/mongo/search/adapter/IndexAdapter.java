@@ -24,9 +24,10 @@ package com.github.thmarx.mongo.search.adapter;
  * #L%
  */
 
-import com.github.thmarx.mongo.search.index.commands.Command;
 import java.io.IOException;
 import org.bson.Document;
+
+import com.github.thmarx.mongo.search.index.messages.Message;
 
 /**
  *
@@ -36,7 +37,7 @@ public interface IndexAdapter extends AutoCloseable {
 
 	void indexDocument (final String database, final String collection, final Document document) throws IOException;
 	
-	void enqueueCommand (Command command);
+	void enqueueMessage (Message command);
 	
 	void startQueueWorker();
 }

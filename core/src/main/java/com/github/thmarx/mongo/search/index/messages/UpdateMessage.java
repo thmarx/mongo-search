@@ -1,9 +1,4 @@
-
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package com.github.thmarx.mongo.search.index.commands;
+package com.github.thmarx.mongo.search.index.messages;
 
 /*-
  * #%L
@@ -25,10 +20,12 @@ package com.github.thmarx.mongo.search.index.commands;
  * #L%
  */
 
+import org.bson.Document;
+
 /**
  *
  * @author t.marx
  */
-public interface Command {
+public record UpdateMessage (String uid, String database, String collection, Document document) implements Message {
 	
 }

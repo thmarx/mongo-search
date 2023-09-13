@@ -20,6 +20,7 @@
 		<mongodb-crypt.version>1.8.0</mongodb-crypt.version>
 
 		<mongo-trigger.version>0.4</mongo-trigger.version>
+		<mongo-directory.version>1.0.0</mongo-directory.version>
 	</properties>
 	<inceptionYear>2023</inceptionYear>
 	<organization>
@@ -53,6 +54,12 @@
 				<groupId>com.github.thmarx.mongo.search</groupId>
 				<artifactId>mongo-search-core</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>gom.githb.thmarx.mongo.directory</groupId>
+				<artifactId>mongo-directory</artifactId>
+				<version>${mongo-directory.version}</version>
 			</dependency>
 
 			<dependency>
@@ -110,6 +117,22 @@
 
 	<build>
 		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>1.18.28</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>license-maven-plugin</artifactId>

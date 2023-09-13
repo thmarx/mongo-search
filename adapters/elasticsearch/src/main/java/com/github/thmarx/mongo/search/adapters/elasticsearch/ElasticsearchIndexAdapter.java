@@ -29,11 +29,11 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
-import com.github.thmarx.mongo.search.index.commands.Command;
-import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
-import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
-import com.github.thmarx.mongo.search.index.commands.InsertCommand;
-import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
+import com.github.thmarx.mongo.search.index.messages.Message;
+import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
+import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
+import com.github.thmarx.mongo.search.index.messages.InsertMessage;
+import com.github.thmarx.mongo.search.index.messages.UpdateMessage;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
 import java.util.HashMap;
@@ -91,15 +91,15 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 			@Override
 			public void update() {
 				try {
-					Command command = getCommandQueue().take();
+					Message message = getMessageQueue().take();
 
-					if (command instanceof InsertCommand indexCommand) {
+					if (message instanceof InsertMessage indexCommand) {
 						index(indexCommand);
-					} else if (command instanceof DeleteCommand deleteCommand) {
+					} else if (message instanceof DeleteMessage deleteCommand) {
 						delete(deleteCommand);
-					} else if (command instanceof UpdateCommand updateCommand) {
+					} else if (message instanceof UpdateMessage updateCommand) {
 						ElasticsearchIndexAdapter.this.update(updateCommand);
-					} else if (command instanceof DropCollectionCommand dropCollectionCommand) {
+					} else if (message instanceof DropCollectionMessage dropCollectionCommand) {
 						dropCollection(dropCollectionCommand);
 					}
 
@@ -111,7 +111,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		queueWorkerThread.start();
 	}
 
-	private void index(InsertCommand command) {
+	private void index(InsertMessage command) {
 		try {
 
 			Map<String, Object> document = new HashMap<>();
@@ -134,7 +134,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		}
 	}
 
-	private void update(UpdateCommand command) {
+	private void update(UpdateMessage command) {
 		try {
 
 			Map<String, Object> document = new HashMap<>();
@@ -158,7 +158,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		}
 	}
 
-	private void delete(DeleteCommand command) {
+	private void delete(DeleteMessage command) {
 		try {
 
 			DeleteResponse response = esClient.delete(i -> i
@@ -174,7 +174,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 	 * 
 	 * @param command
 	 */
-	private void dropCollection(DropCollectionCommand command) {
+	private void dropCollection(DropCollectionMessage command) {
 		try {
 
 			boolean exists = esClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();

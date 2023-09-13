@@ -1,4 +1,4 @@
-package com.github.thmarx.mongo.search.index.commands;
+package com.github.thmarx.mongo.search.index.messages;
 
 /*-
  * #%L
@@ -24,6 +24,6 @@ package com.github.thmarx.mongo.search.index.commands;
  *
  * @author t.marx
  */
-public record DropCollectionCommand (String database, String collection) implements Command {
+public record DeleteMessage (String uid, String database, String collection) implements Message {
 	
 }

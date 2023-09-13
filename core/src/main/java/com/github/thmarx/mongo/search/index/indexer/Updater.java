@@ -25,11 +25,12 @@ package com.github.thmarx.mongo.search.index.indexer;
  */
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
-import com.github.thmarx.mongo.search.index.commands.DeleteCommand;
-import com.github.thmarx.mongo.search.index.commands.DropCollectionCommand;
-import com.github.thmarx.mongo.search.index.commands.DropDatabaseCommand;
-import com.github.thmarx.mongo.search.index.commands.InsertCommand;
-import com.github.thmarx.mongo.search.index.commands.UpdateCommand;
+import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
+import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
+import com.github.thmarx.mongo.search.index.messages.DropDatabaseMessage;
+import com.github.thmarx.mongo.search.index.messages.InsertMessage;
+import com.github.thmarx.mongo.search.index.messages.UpdateMessage;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
@@ -55,8 +56,8 @@ public class Updater {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var databaseName = document.getDatabaseName();
 
-		var command = new InsertCommand(uid, databaseName, collection, document.getFullDocument());
-		indexAdapter.enqueueCommand(command);
+		var command = new InsertMessage(uid, databaseName, collection, document.getFullDocument());
+		indexAdapter.enqueueMessage(command);
 	}
 
 	public void update(ChangeStreamDocument<Document> document) {
@@ -69,8 +70,8 @@ public class Updater {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var databaseName = document.getDatabaseName();
 
-		var command = new UpdateCommand(uid, databaseName, collection, document.getFullDocument());
-		indexAdapter.enqueueCommand(command);
+		var command = new UpdateMessage(uid, databaseName, collection, document.getFullDocument());
+		indexAdapter.enqueueMessage(command);
 	}
 	
 	public void delete(ChangeStreamDocument<Document> document) {
@@ -83,8 +84,8 @@ public class Updater {
 		var uid = document.getDocumentKey().getObjectId("_id").getValue().toString();
 		var databaseName = document.getDatabaseName();
 
-		var command = new DeleteCommand(uid, databaseName, collection);
-		indexAdapter.enqueueCommand(command);
+		var command = new DeleteMessage(uid, databaseName, collection);
+		indexAdapter.enqueueMessage(command);
 	}
 
 	public void dropCollection(final String database, final String collection) {
@@ -92,12 +93,12 @@ public class Updater {
 			return;
 		}
 		
-		var command = new DropCollectionCommand(database, collection);
-		indexAdapter.enqueueCommand(command);
+		var command = new DropCollectionMessage(database, collection);
+		indexAdapter.enqueueMessage(command);
 	}
 
 	public void dropDatabase(final String database) {
-		var command = new DropDatabaseCommand(database);
-		indexAdapter.enqueueCommand(command);
+		var command = new DropDatabaseMessage(database);
+		indexAdapter.enqueueMessage(command);
 	}
 }

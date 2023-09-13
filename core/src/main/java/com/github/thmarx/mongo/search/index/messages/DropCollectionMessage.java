@@ -1,4 +1,4 @@
-package com.github.thmarx.mongo.search.index.commands;
+package com.github.thmarx.mongo.search.index.messages;
 
 /*-
  * #%L
@@ -20,12 +20,10 @@ package com.github.thmarx.mongo.search.index.commands;
  * #L%
  */
 
-import org.bson.Document;
-
 /**
  *
  * @author t.marx
  */
-public record UpdateCommand (String uid, String database, String collection, Document document) implements Command {
+public record DropCollectionMessage (String database, String collection) implements Message {
 	
 }

@@ -2,7 +2,7 @@ package com.github.thmarx.mongo.search.adapter;
 
 /*-
  * #%L
- * mongo-search-index
+ * mongo-search-core
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -20,8 +20,9 @@ package com.github.thmarx.mongo.search.adapter;
  * #L%
  */
 
-import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
+import com.github.thmarx.mongo.search.index.messages.Message;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
@@ -35,15 +36,15 @@ public abstract class AbstractIndexAdapter<C extends IndexConfiguration> impleme
 	protected final C configuration;
 	
 	@Getter
-	protected BlockingQueue<Command> commandQueue;
+	protected BlockingQueue<Message> messageQueue;
 	
 	protected AbstractIndexAdapter (final C configuration) {
 		this.configuration = configuration;
-		this.commandQueue = new LinkedBlockingQueue<>();
+		this.messageQueue = new LinkedBlockingQueue<>();
 	}
 	
 	@Override
-	public void enqueueCommand (Command command) {
-		commandQueue.add(command);
+	public void enqueueMessage (Message command) {
+		messageQueue.add(command);
 	}
 }

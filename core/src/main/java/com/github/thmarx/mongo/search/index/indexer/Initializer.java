@@ -25,6 +25,9 @@ package com.github.thmarx.mongo.search.index.indexer;
  */
 
 import com.mongodb.client.MongoDatabase;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import java.io.IOException;
 import java.util.List;
@@ -36,7 +39,8 @@ import org.bson.Document;
  *
  * @author t.marx
  */
-public class Initializer {
+@Slf4j
+public class Initializer implements Runnable {
 	
 	private MongoDatabase database;
 	private List<String> collections;
@@ -45,31 +49,39 @@ public class Initializer {
 	
 	private CompletableFuture<Void> initFuture;
 	
-	public Initializer (final IndexAdapter indexAdapter, final MongoDatabase database, final List<String> collections) {
+	private Consumer<Void> readyCallback;
+
+	public Initializer (final IndexAdapter indexAdapter, final MongoDatabase database, final List<String> collections, final Consumer<Void> readyCallback) {
 		this.database = database;
 		this.collections = collections;
 		this.indexAdapter = indexAdapter;
+		this.readyCallback = readyCallback;
 	}
 	
 	public boolean isRunning () {
 		return !initFuture.isDone();
 	}
 	
-	public void initialize (Consumer<Void> ready) {
-		initFuture = CompletableFuture.runAsync(() -> {
-			collections.forEach(this::initCollection);
-			ready.accept(null);
-		});
+	@Override
+	public void run () {
+		log.debug("initial index collections");
+		collections.forEach(this::initCollection);
+		log.debug("all collections indexed");
+		readyCallback.accept(null);
 	}
 	
 	private void initCollection (final String collectionName) {
+		log.debug("indexing collection " + collectionName);
+		log.debug("documents " + database.getCollection(collectionName).countDocuments());
 		database.getCollection(collectionName).find().forEach(doc -> {
 			try {
 				indexDocument(collectionName, doc);
 			} catch (Exception ex) {
+				log.error("", ex);
 				throw new RuntimeException(ex);
 			}
 		});
+		log.debug("indexing collection finished");
 	}
 	
 	private void indexDocument (final String collection, final Document document) throws IOException {

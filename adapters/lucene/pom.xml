@@ -18,6 +18,11 @@
 			<groupId>com.github.thmarx.mongo.search</groupId>
 			<artifactId>mongo-search-core</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>gom.githb.thmarx.mongo.directory</groupId>
+  			<artifactId>mongo-directory</artifactId>
+		</dependency>
 		
 		<dependency>
 			<groupId>org.projectlombok</groupId>

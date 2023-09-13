@@ -1,19 +1,5 @@
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoublePoint;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FloatPoint;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.LongPoint;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-
 /*-
  * #%L
  * monog-search-adapters-lucene
@@ -34,7 +20,21 @@ import org.apache.lucene.document.TextField;
  * #L%
  */
 
-import com.github.thmarx.mongo.search.index.commands.InsertCommand;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FloatPoint;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+
+import com.github.thmarx.mongo.search.index.messages.InsertMessage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -79,7 +79,7 @@ public class Documents {
 
 		return doc;
 	}
-	public Document build(final InsertCommand command) {
+	public Document build(final InsertMessage command) {
 
 		return build(command.database(), command.collection(), command.uid(), command.document());
 	}

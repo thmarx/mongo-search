@@ -37,6 +37,8 @@ import com.github.thmarx.mongo.trigger.CollectionTrigger;
 import com.github.thmarx.mongo.trigger.DatabaseTrigger;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -52,16 +54,20 @@ public class MongoSearch implements AutoCloseable {
 	Updater updater;
 
 	MongoTriggers mongoTriggers;
-	
+
+	ExecutorService executorService;
+
 	public MongoSearch() {
+		this.executorService = Executors.newSingleThreadExecutor();
 	}
-	
-	public IndexAdapter getIndexAdapter () {
+
+	public IndexAdapter getIndexAdapter() {
 		return indexAdapter;
 	}
 
 	@Override
 	public void close() throws Exception {
+		executorService.shutdown();
 		mongoTriggers.close();
 		indexAdapter.close();
 	}
@@ -69,12 +75,15 @@ public class MongoSearch implements AutoCloseable {
 	public void open(IndexAdapter indexAdapter, MongoDatabase database, List<String> collections) throws IOException {
 		this.indexAdapter = indexAdapter;
 
-		initializer = new Initializer(indexAdapter, database, collections);
+		initializer = new Initializer(indexAdapter, database, collections, (Void) -> {
+			log.debug("index initalized, start queue working");
+			indexAdapter.startQueueWorker();
+		});
 		updater = new Updater(indexAdapter, collections);
-		
+
 		mongoTriggers = new MongoTriggers();
 		mongoTriggers.register((type, databasename) -> {
-		
+
 			if (DatabaseTrigger.Type.DROPPED.equals(type)) {
 				updater.dropDatabase(databasename);
 			}
@@ -84,17 +93,20 @@ public class MongoSearch implements AutoCloseable {
 				updater.dropCollection(databasename, collectionname);
 			}
 		});
-		mongoTriggers.register(Event.INSERT, (databasename, collectionname, document) -> {updater.insert(document);});
-		mongoTriggers.register(Event.DELETE, (databasename, collectionname, document) -> {updater.delete(document);});
-		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {updater.update(document);});
-		
-		mongoTriggers.open(database);
-		
-		log.debug("start initalizing");
-		initializer.initialize((Void) -> {
-			log.debug("index initalized, start queue working");
-			indexAdapter.startQueueWorker();
+		mongoTriggers.register(Event.INSERT, (databasename, collectionname, document) -> {
+			updater.insert(document);
 		});
+		mongoTriggers.register(Event.DELETE, (databasename, collectionname, document) -> {
+			updater.delete(document);
+		});
+		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {
+			updater.update(document);
+		});
+
+		mongoTriggers.open(database);
+
+		log.debug("start initalizing");
+		executorService.submit(initializer);
 
 	}
 }
