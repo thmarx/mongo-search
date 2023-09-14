@@ -23,6 +23,7 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.index.IndexWriter;
@@ -40,6 +41,7 @@ import org.apache.lucene.store.NRTCachingDirectory;
  *
  * @author t.marx
  */
+@Slf4j
 public class LuceneIndex {
 
 	private IndexWriter writer;
@@ -87,10 +89,9 @@ public class LuceneIndex {
 	public void commit() {
 		try {
 			writer.commit();
-			writer.maybeMerge();
 			searcherManager.maybeRefresh();
 		} catch (IOException ex) {
-			Logger.getLogger(LuceneIndex.class.getName()).log(Level.SEVERE, null, ex);
+			log.error("", ex);
 		}
 	}
 	

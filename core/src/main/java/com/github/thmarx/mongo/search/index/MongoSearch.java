@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.github.thmarx.mongo.search.index.commands.Command;
-import com.github.thmarx.mongo.search.index.indexer.Initializer;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
 import com.github.thmarx.mongo.trigger.CollectionTrigger;
 import com.github.thmarx.mongo.trigger.DatabaseTrigger;

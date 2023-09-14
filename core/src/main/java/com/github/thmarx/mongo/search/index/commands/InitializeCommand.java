@@ -56,6 +56,7 @@ public class InitializeCommand implements Command {
                         log.error("error clearing collection", e);
                     }
                     log.debug("index collection " + collection);
+					log.debug(dbCol.countDocuments() + " documents to index");
                     dbCol.find(Filters.empty()).forEach((document) -> {
                         try {
                             indexAdapter.indexDocument(database.getName(), collection, document);
@@ -63,7 +64,7 @@ public class InitializeCommand implements Command {
                             log.error("error indexing document", e);
                         }
                     });
-
+					log.debug("collection indexed");
                 }
             });
 

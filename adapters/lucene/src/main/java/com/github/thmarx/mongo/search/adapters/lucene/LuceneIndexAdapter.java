@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -48,6 +49,7 @@ import org.bson.Document;
  *
  * @author t.marx
  */
+@Slf4j
 public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfiguration> {
 
 	LuceneIndex luceneIndex;
@@ -101,6 +103,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 	@Override
 	public void close() throws Exception {
+		log.debug("close lucene index adapter");
 		scheduler.shutdown();
 		queueWorker.stop();
 		queueWorkerThread.interrupt();
@@ -123,8 +126,14 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 		luceneIndex.open();
 
 		scheduler.scheduleWithFixedDelay(() -> {
-			luceneIndex.commit();
-		}, 1, 1, TimeUnit.SECONDS);
+			try {
+				log.debug("commit index");
+				luceneIndex.commit();
+				log.debug("commited");
+			} catch (Exception e) {
+				log.error("", e);
+			}
+		}, 1, 10, TimeUnit.SECONDS);
 
 		queueWorker = new PausableThread(true) {
 			@Override
