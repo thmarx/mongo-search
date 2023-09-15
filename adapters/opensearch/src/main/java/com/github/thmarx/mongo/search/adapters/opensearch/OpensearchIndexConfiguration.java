@@ -26,32 +26,13 @@ package com.github.thmarx.mongo.search.adapters.opensearch;
 
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
-import com.github.thmarx.mongo.search.index.utils.MultiMap;
-import java.util.Collection;
-import java.util.function.BiFunction;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Map;
+import org.bson.Document;
 
 /**
  *
  * @author t.marx
  */
-public class OpensearchIndexConfiguration extends IndexConfiguration {
-	final MultiMap<String, FieldConfiguration> fieldConfigurations = new MultiMap<>();
+public class OpensearchIndexConfiguration extends IndexConfiguration<Document, Map<String, Object>, FieldConfiguration> {
 	
-	@Getter
-	@Setter
-	private BiFunction<String, String, String> indexNameMapper = (database, collection) -> collection;
-	
-	public OpensearchIndexConfiguration addFieldConfiguration (final String collection, final FieldConfiguration fieldConfig) {
-		fieldConfigurations.put(collection, fieldConfig);
-		return this;
-	}
-	
-	public Collection<FieldConfiguration> getFieldConfigurations (final String collection) {
-		return fieldConfigurations.get(collection);
-	}
-	public boolean hasFieldConfigurations (final String collection) {
-		return fieldConfigurations.containsKey(collection);
-	}
 }

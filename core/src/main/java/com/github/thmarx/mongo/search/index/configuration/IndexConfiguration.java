@@ -4,7 +4,10 @@
  */
 package com.github.thmarx.mongo.search.index.configuration;
 
+import com.github.thmarx.mongo.search.index.utils.MultiMap;
+import java.util.Collection;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -34,8 +37,25 @@ import lombok.Setter;
  *
  * @author t.marx
  */
-public class IndexConfiguration<SD, TD> {
+public class IndexConfiguration<SD, TD, FCT extends FieldConfiguration> {
     @Getter
     @Setter
 	private BiConsumer<SD, TD> documentExtender = (source, target) -> {};
+	
+	final MultiMap<String, FCT> fieldConfigurations = new MultiMap<>();
+	
+	@Getter
+	@Setter
+	private BiFunction<String, String, String> indexNameMapper = (database, collection) -> collection;
+	
+	public void addFieldConfiguration (final String collection, final FCT fieldConfig) {
+		fieldConfigurations.put(collection, fieldConfig);
+	}
+	
+	public Collection<FCT> getFieldConfigurations (final String collection) {
+		return fieldConfigurations.get(collection);
+	}
+	public boolean hasFieldConfigurations (final String collection) {
+		return fieldConfigurations.containsKey(collection);
+	}
 }

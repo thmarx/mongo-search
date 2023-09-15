@@ -2,11 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.github.thmarx.mongo.search.adapters.elasticsearch;
+package com.github.thmarx.mongo.search.adapters.solr;
 
 /*-
  * #%L
- * monog-search-adapters-lucene
+ * monog-search-adapters-solr
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -23,11 +23,6 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  * limitations under the License.
  * #L%
  */
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
-import co.elastic.clients.elasticsearch.core.DeleteResponse;
-import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
 import com.github.thmarx.mongo.search.index.messages.Message;
 import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
@@ -42,45 +37,50 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.SolrInputField;
 import org.bson.Document;
 
 /**
  *
  * @author t.marx
  */
-public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<ElasticsearchIndexConfiguration> {
+@Slf4j
+public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguration> {
 
 	private Thread queueWorkerThread;
 
 	private PausableThread queueWorker;
 
-	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	SolrClient indexClient;
 
-	ElasticsearchClient esClient;
-
-	public ElasticsearchIndexAdapter(final ElasticsearchIndexConfiguration configuration) {
+	public SolrIndexAdapter(final SolrIndexConfiguration configuration) {
 		super(configuration);
 
 	}
 
 	@Override
 	public void indexDocument(String database, String collection, Document document) throws IOException {
-		InsertMessage message = new InsertMessage(document.getObjectId("_id").toString(), database, collection, document);
-		index(message);
 	}
 
 	@Override
 	public void clearCollection(String database, String collection) throws IOException {
-		DropCollectionMessage message = new DropCollectionMessage(database, collection);
-		dropCollection(message);
 	}
 
 	public void commit() {
+		try {
+			indexClient.commit();
+		} catch (SolrServerException | IOException ex) {
+			log.error("", ex);
+		}
 	}
 
 	@Override
 	public void close() throws Exception {
-		scheduler.shutdown();
 		queueWorker.stop();
 		queueWorkerThread.interrupt();
 	}
@@ -95,9 +95,9 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		this.queueWorker.pause();
 	}
 
-	public void open(ElasticsearchClient esClient) throws IOException {
+	public void open(SolrClient indexClient) throws IOException {
 
-		this.esClient = esClient;
+		this.indexClient = indexClient;
 
 		queueWorker = new PausableThread(true) {
 			@Override
@@ -116,6 +116,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 					}
 
 				} catch (Exception ex) {
+					log.error("", ex);
 				}
 			}
 		};
@@ -123,15 +124,17 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		queueWorkerThread.start();
 	}
 
-	private Map<String, Object> createDocument(final String database, final String collection, final Document document) {
-		Map<String, Object> indexDocument = new HashMap<>();
-		indexDocument.put("_database", database);
-		indexDocument.put("_collection", collection);
+	private SolrInputDocument createDocument(final String uuid, final String database, final String collection, final Document document) {
+		SolrInputDocument indexDocument = new SolrInputDocument();
+		
+		indexDocument.addField("id", uuid);
+		indexDocument.addField("_database", database);
+		indexDocument.addField("_collection", collection);
 		if (configuration.hasFieldConfigurations(collection)) {
 			var fieldConfigs = configuration.getFieldConfigurations(collection);
 			fieldConfigs.forEach((fc) -> {
 				var value = fc.getMapper().getFieldValue(fc.getFieldName(), document);
-				indexDocument.put(fc.getIndexFieldName(), value);
+				indexDocument.addField(fc.getIndexFieldName(), value);
 			});
 		}
 
@@ -145,40 +148,37 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 	private void index(InsertMessage command) {
 		try {
 
-			Map<String, Object> document = createDocument(command.database(), command.collection(), command.document());
+			SolrInputDocument document = createDocument(command.uid(), command.database(), command.collection(), command.document());
 			
-			IndexResponse response = esClient.index(i -> i
-					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-					.id(command.uid())
-					.document(document));
-		} catch (IOException | ElasticsearchException ex) {
-			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
+			indexClient.add(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection())
+					, document, 1000);
+		} catch (IOException | SolrServerException ex) {
+			log.error("error " ,ex);
 		}
 	}
 
 	private void updateDocument(UpdateMessage command) {
 		try {
 
-			Map<String, Object> document = createDocument(command.database(), command.collection(), command.document());
-
-			esClient.update(
-					u -> u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-							.id(command.uid())
-							.doc(document),
-					Map.class);
-		} catch (IOException | ElasticsearchException ex) {
-			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
+			SolrInputDocument document = createDocument(command.uid(), command.database(), command.collection(), command.document());
+			
+			indexClient.add(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection())
+					, document, 1000);
+		} catch (IOException | SolrServerException ex) {
+			log.error("error " ,ex);
 		}
 	}
 
 	private void delete(DeleteMessage command) {
 		try {
 
-			DeleteResponse response = esClient.delete(i -> i
-					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-					.id(command.uid()));
-		} catch (IOException | ElasticsearchException ex) {
-			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
+			indexClient.deleteById(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
+					command.uid());
+		} catch (IOException | SolrServerException ex) {
+			log.error("error " ,ex);
 		}
 	}
 
@@ -190,21 +190,13 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 	private void dropCollection(DropCollectionMessage command) {
 		try {
 
-			boolean exists = esClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();
-
-			if (exists) {
-				//esClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
-				esClient.deleteByQuery(fn
-						-> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-								.query(qb
-										-> qb.match(t
-										-> t.field("_collection").query(command.collection())
-								)
-								)
-				);
-			}
-		} catch (IOException | ElasticsearchException ex) {
-			Logger.getLogger(ElasticsearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
+			String query = "_database : '%s' AND _collection: '%s' ".formatted(command.database(), command.collection());
+			
+			indexClient.deleteByQuery(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
+					query);
+		} catch (IOException | SolrServerException ex) {
+			log.error("error " ,ex);
 		}
 	}
 }

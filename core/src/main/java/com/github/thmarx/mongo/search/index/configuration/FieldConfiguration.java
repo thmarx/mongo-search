@@ -35,7 +35,7 @@ import java.util.function.Supplier;
  */
 @SuperBuilder
 @Getter
-public class FieldConfiguration<SD, TD> {
+public class FieldConfiguration {
 	private final String fieldName;
 	private final String indexFieldName;
 

@@ -2,11 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.github.thmarx.mongo.search.adapters.elasticsearch;
+package com.github.thmarx.mongo.search.adapters.solr;
 
 /*-
  * #%L
- * monog-search-adapters-elasticsearch
+ * monog-search-adapters-solr
  * %%
  * Copyright (C) 2023 Marx-Software
  * %%
@@ -27,12 +27,13 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import java.util.Map;
+import org.apache.solr.common.SolrInputDocument;
 import org.bson.Document;
 
 /**
  *
  * @author t.marx
  */
-public class ElasticsearchIndexConfiguration extends IndexConfiguration<Document, Map<String, Object>, FieldConfiguration> {
+public class SolrIndexConfiguration extends IndexConfiguration<Document, SolrInputDocument, FieldConfiguration> {
 	
 }

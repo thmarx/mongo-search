@@ -24,10 +24,18 @@ package com.github.thmarx.mongo.search.adapters.solr;
  * #L%
  */
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import java.io.IOException;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.containers.SolrContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 
 /**
@@ -39,7 +47,13 @@ public class AbstractContainerTest {
 	protected SolrContainer solrContainer;
 	protected MongoDBContainer mongdbContainer;
 
-	@BeforeTest
+	protected MongoClient mongoClient;
+	protected SolrClient solrClient;
+	protected MongoDatabase database;
+
+
+	
+	@BeforeClass
 	public void up() {
 		solrContainer = new SolrContainer(DockerImageName.parse(
 				"solr:9.3"
@@ -50,12 +64,22 @@ public class AbstractContainerTest {
 				"mongo:6.0.9"
 		));
 		mongdbContainer.start();
+		
+		mongoClient = MongoClients.create(mongdbContainer.getConnectionString());
+		database = mongoClient.getDatabase("search");
+
+		// Do whatever you want with the client ...
+		solrClient = new Http2SolrClient.Builder(
+				"http://" + solrContainer.getHost() + ":" + solrContainer.getSolrPort() + "/solr"
+		).build();
 	}
 
-	@AfterTest
-	public void down() {
-		solrContainer.stop();
+	@AfterClass
+	public void down() throws IOException {
+		mongoClient.close();
+		solrClient.close();
 		
+		solrContainer.stop();
 		mongdbContainer.stop();
 	}
 }

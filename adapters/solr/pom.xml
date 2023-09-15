@@ -8,7 +8,7 @@
 		<artifactId>mongo-search-adapters</artifactId>
 		<version>0.1</version>
 	</parent>
-	<artifactId>monog-search-adapters-solr</artifactId>
+	<artifactId>mongo-search-adapters-solr</artifactId>
 	<packaging>jar</packaging>
 	<properties>
 		<solr.version>9.3.0</solr.version>

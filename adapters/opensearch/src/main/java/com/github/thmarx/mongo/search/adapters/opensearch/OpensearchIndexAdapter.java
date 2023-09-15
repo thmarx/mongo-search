@@ -62,12 +62,14 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 
 	@Override
 	public void indexDocument(String database, String collection, Document document) throws IOException {
-
+		InsertMessage message = new InsertMessage(document.getObjectId("_id").toString(), database, collection, document);
+		index(message);
 	}
 
 	@Override
 	public void clearCollection(String database, String collection) throws IOException {
-
+		DropCollectionMessage message = new DropCollectionMessage(database, collection);
+		dropCollection(message);
 	}
 
 	public void commit() {
@@ -105,7 +107,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 					} else if (command instanceof DeleteMessage deleteCommand) {
 						delete(deleteCommand);
 					} else if (command instanceof UpdateMessage updateCommand) {
-						OpensearchIndexAdapter.this.update(updateCommand);
+						updateDocument(updateCommand);
 					} else if (command instanceof DropCollectionMessage dropCollectionCommand) {
 						dropCollection(dropCollectionCommand);
 					}
@@ -118,19 +120,29 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		queueWorkerThread.start();
 	}
 
+	private Map<String, Object> createDocument(final String database, final String collection, final Document document) {
+		Map<String, Object> indexDocument = new HashMap<>();
+		indexDocument.put("_database", database);
+		indexDocument.put("_collection", collection);
+		if (configuration.hasFieldConfigurations(collection)) {
+			var fieldConfigs = configuration.getFieldConfigurations(collection);
+			fieldConfigs.forEach((fc) -> {
+				var value = fc.getMapper().getFieldValue(fc.getFieldName(), document);
+				indexDocument.put(fc.getIndexFieldName(), value);
+			});
+		}
+
+		if (configuration.getDocumentExtender() != null) {
+			configuration.getDocumentExtender().accept(document, indexDocument);
+		}
+
+		return indexDocument;
+	}
+
 	private void index(InsertMessage command) {
 		try {
 
-			Map<String, Object> document = new HashMap<>();
-			document.put("_database", command.database());
-			document.put("_collection", command.collection());
-			if (configuration.hasFieldConfigurations(command.collection())) {
-				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
-				fieldConfigs.forEach((fc) -> {
-					var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
-					document.put(fc.getIndexFieldName(), value);
-				});
-			}
+			Map<String, Object> document = createDocument(command.database(), command.collection(), command.document());
 
 			IndexResponse response = osClient.index(i -> i
 					.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
@@ -141,26 +153,16 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 			Logger.getLogger(OpensearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
-	private void update(UpdateMessage command) {
+
+	private void updateDocument(UpdateMessage command) {
 		try {
+			Map<String, Object> document = createDocument(command.database(), command.collection(), command.document());
 
-			Map<String, Object> document = new HashMap<>();
-			document.put("_database", command.database());
-			document.put("_collection", command.collection());
-			if (configuration.hasFieldConfigurations(command.collection())) {
-				var fieldConfigs = configuration.getFieldConfigurations(command.collection());
-				fieldConfigs.forEach((fc) -> {
-					var value = fc.getMapper().getFieldValue(fc.getFieldName(), command.document());
-					document.put(fc.getIndexFieldName(), value);
-				});
-			}
-
-			osClient.update(u -> 
-					u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-					.id(command.uid())
-					.doc(document)
-					, Map.class
+			osClient.update(u
+					-> u.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
+							.id(command.uid())
+							.doc(document),
+					 Map.class
 			);
 		} catch (IOException ex) {
 			Logger.getLogger(OpensearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
@@ -178,25 +180,26 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 			Logger.getLogger(OpensearchIndexAdapter.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
 	/**
 	 * For OpenSearch the collection will not be dropped!
+	 *
 	 * @param command
 	 */
 	private void dropCollection(DropCollectionMessage command) {
 		try {
 
 			boolean exists = osClient.indices().exists(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))).value();
-			
+
 			if (exists) {
 				//osClient.indices().delete(fn -> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection())));
-				osClient.deleteByQuery(fn -> 
-					fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
-					.query(qb -> 
-						qb.match(t ->
-							t.field("_collection").query(FieldValue.of(command.collection()))
-						)
-					)
+				osClient.deleteByQuery(fn
+						-> fn.index(configuration.getIndexNameMapper().apply(command.database(), command.collection()))
+								.query(qb
+										-> qb.match(t
+										-> t.field("_collection").query(FieldValue.of(command.collection()))
+								)
+								)
 				);
 			}
 		} catch (IOException ex) {

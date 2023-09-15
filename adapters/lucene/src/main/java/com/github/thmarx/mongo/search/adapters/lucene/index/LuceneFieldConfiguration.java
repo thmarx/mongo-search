@@ -34,7 +34,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
-public class LuceneFieldConfiguration extends FieldConfiguration<Document, org.apache.lucene.document.Document> {
+public class LuceneFieldConfiguration extends FieldConfiguration {
 
     /**
      * Field value is stored.

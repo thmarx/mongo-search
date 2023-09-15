@@ -38,7 +38,7 @@ import lombok.Setter;
  *
  * @author t.marx
  */
-public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Document, Document> {
+public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Document, Document, LuceneFieldConfiguration> {
 	Storage storage;
 	
 	Analyzer analyzer;
@@ -47,23 +47,11 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 	@Setter
 	FacetsConfig facetsConfig;
 	
-	final MultiMap<String, LuceneFieldConfiguration> fieldConfigurations = new MultiMap<>();
+	
 
 	@Getter
 	@Setter
 	DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
-	
-	public LuceneIndexConfiguration addFieldConfiguration (final String collection, final LuceneFieldConfiguration fieldConfig) {
-		fieldConfigurations.put(collection, fieldConfig);
-		return this;
-	}
-	
-	public Collection<LuceneFieldConfiguration> getFieldConfigurations (final String collection) {
-		return fieldConfigurations.get(collection);
-	}
-	public boolean hasFieldConfigurations (final String collection) {
-		return fieldConfigurations.containsKey(collection);
-	}
 	
 	public LuceneIndexConfiguration setStorage (final Storage storage) {
 		this.storage = storage;
