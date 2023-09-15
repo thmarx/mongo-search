@@ -19,26 +19,18 @@ package com.github.thmarx.mongo.search.adapters.solr;
  * limitations under the License.
  * #L%
  */
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import com.github.thmarx.mongo.search.index.MongoSearch;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
@@ -48,9 +40,7 @@ import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -74,6 +64,7 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 		database.createCollection(COLLECTION_DOKUMENTE);
 
 		SolrIndexConfiguration indexConfiguration = new SolrIndexConfiguration();
+		indexConfiguration.setCommitWithin(1000);
 		indexConfiguration.addFieldConfiguration(COLLECTION_DOKUMENTE,
 				FieldConfiguration.builder()
 						.fieldName("name")

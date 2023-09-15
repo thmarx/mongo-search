@@ -150,9 +150,16 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 
 			SolrInputDocument document = createDocument(command.uid(), command.database(), command.collection(), command.document());
 			
-			indexClient.add(
+			if (configuration.commitWithin.isPresent()) {
+				indexClient.add(
 					configuration.getIndexNameMapper().apply(command.database(), command.collection())
-					, document, 1000);
+					, document
+					, configuration.commitWithin.get());
+			} else {
+				indexClient.add(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection())
+					, document);
+			}
 		} catch (IOException | SolrServerException ex) {
 			log.error("error " ,ex);
 		}
@@ -163,9 +170,16 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 
 			SolrInputDocument document = createDocument(command.uid(), command.database(), command.collection(), command.document());
 			
-			indexClient.add(
+			if (configuration.commitWithin.isPresent()) {
+				indexClient.add(
 					configuration.getIndexNameMapper().apply(command.database(), command.collection())
-					, document, 1000);
+					, document
+					, configuration.commitWithin.get());
+			} else {
+				indexClient.add(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection())
+					, document);
+			}
 		} catch (IOException | SolrServerException ex) {
 			log.error("error " ,ex);
 		}
@@ -174,9 +188,17 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 	private void delete(DeleteMessage command) {
 		try {
 
-			indexClient.deleteById(
+			if (configuration.commitWithin.isPresent()) {
+				indexClient.deleteById(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
+					command.uid(),
+					configuration.commitWithin.get());
+			} else {
+				indexClient.deleteById(
 					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
 					command.uid());
+			}
+			
 		} catch (IOException | SolrServerException ex) {
 			log.error("error " ,ex);
 		}
@@ -192,9 +214,17 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 
 			String query = "_database : '%s' AND _collection: '%s' ".formatted(command.database(), command.collection());
 			
-			indexClient.deleteByQuery(
+			if (configuration.commitWithin.isPresent()) {
+				indexClient.deleteByQuery(
+					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
+					query,
+					configuration.commitWithin.get());
+			} else {
+				indexClient.deleteByQuery(
 					configuration.getIndexNameMapper().apply(command.database(), command.collection()), 
 					query);
+			}
+			
 		} catch (IOException | SolrServerException ex) {
 			log.error("error " ,ex);
 		}

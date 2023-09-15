@@ -27,6 +27,9 @@ package com.github.thmarx.mongo.search.adapters.solr;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import java.util.Map;
+import java.util.Optional;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.solr.common.SolrInputDocument;
 import org.bson.Document;
 
@@ -36,4 +39,9 @@ import org.bson.Document;
  */
 public class SolrIndexConfiguration extends IndexConfiguration<Document, SolrInputDocument, FieldConfiguration> {
 	
+	protected Optional<Integer> commitWithin = Optional.empty();
+	
+	public void setCommitWithin (int commitWithinMS) {
+		commitWithin = Optional.of(commitWithinMS);
+	}
 }
