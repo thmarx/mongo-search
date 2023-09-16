@@ -31,18 +31,10 @@ import com.github.thmarx.mongo.search.index.messages.InsertMessage;
 import com.github.thmarx.mongo.search.index.messages.UpdateMessage;
 import com.github.thmarx.mongo.search.index.utils.PausableThread;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.SolrInputField;
 import org.bson.Document;
 
 /**

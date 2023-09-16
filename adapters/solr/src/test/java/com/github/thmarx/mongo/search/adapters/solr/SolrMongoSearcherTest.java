@@ -24,6 +24,7 @@ import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +35,13 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -93,26 +96,6 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 	}
 
 	@Test
-	public void test_solr() throws IOException, InterruptedException, SolrServerException {
-
-		System.out.println("TEST");
-
-		SolrPingResponse response = solrClient.ping("dummy");
-		System.out.println("response: " + response.jsonStr());
-
-		CollectionAdminRequest col = CollectionAdminRequest.createCollection(COLLECTION_DOKUMENTE, 1, 1);
-		
-
-		NamedList<Object> request = solrClient.request(col);
-		System.out.println(request);
-
-		SolrInputDocument doc = new SolrInputDocument();
-		doc.addField("id", UUID.randomUUID().toString());
-		doc.addField("name", "thorsten");
-		solrClient.add(COLLECTION_DOKUMENTE, doc);
-	}
-
-	@Test
 	public void test_insert() throws IOException, InterruptedException, SolrServerException {
 
 		Thread.sleep(2000);
@@ -131,6 +114,75 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 
 		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
 	}
+	
+	@Test
+	public void test_clear() throws IOException, InterruptedException, SolrServerException {
+
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		database.getCollection(COLLECTION_DOKUMENTE).deleteMany(Filters.empty());
+		
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+	}
+	
+	@Test
+	public void test_delete_single() throws IOException, InterruptedException, SolrServerException {
+
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		Document toDelete = database.getCollection(COLLECTION_DOKUMENTE).find(Filters.empty()).first();
+		deleteDocument(COLLECTION_DOKUMENTE, toDelete.getObjectId("_id").toString());
+		
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
+	}
+	
+	@Test
+	public void test_update() throws IOException, InterruptedException, SolrServerException {
+
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
+
+		Document toDelete = database.getCollection(COLLECTION_DOKUMENTE).find(Filters.empty()).first();
+		var uid = toDelete.getObjectId("_id").toString();
+		Bson update = Updates.combine(
+		Updates.set("name", "lara")
+		);
+		database.getCollection(COLLECTION_DOKUMENTE)
+				.updateOne(Filters.eq("_id", toDelete.getObjectId("_id")), update);
+		
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+				var doc = getFromIndex(COLLECTION_DOKUMENTE, uid); 
+				return doc.getFirstValue("name").equals("lara");
+		});
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
+	}
+	
+	@Test
+	public void test_drop_collection() throws IOException, InterruptedException, SolrServerException {
+
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		database.getCollection(COLLECTION_DOKUMENTE).drop();
+		
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
+	}
 
 	private void insertDocument(final String collectionName, final Map attributes) {
 		MongoCollection<Document> collection = database.getCollection(collectionName);
@@ -143,11 +195,13 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 		collection.deleteOne(Filters.eq("_id", new ObjectId(uid)));
 	}
 
+	private SolrDocument getFromIndex(final String collection, final String uid) throws IOException, SolrServerException {
+		return solrClient.getById(collection, uid);
+	}
+	
 	private long getSize(final String collection) throws IOException, SolrServerException {
 		SolrQuery query = new SolrQuery("*:*");
 		final QueryResponse response = solrClient.query(collection, query);
-
-		System.out.println(response.getResults().getNumFound());
 		
 		return response.getResults().getNumFound();
 	}
