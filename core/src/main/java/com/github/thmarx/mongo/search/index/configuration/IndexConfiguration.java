@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.github.thmarx.mongo.search.index.configuration;
 
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
@@ -34,27 +30,58 @@ import lombok.Setter;
  */
 
 /**
+ * Base index configuration. Each index implementation can have a custom subclass.
  *
  * @author t.marx
  */
 public class IndexConfiguration<SD, TD, FCT extends FieldConfiguration> {
+	/**
+	 * Extender for the document. It's used to add fields to the index document which are not in the mongodb document.
+	 */
     @Getter
     @Setter
 	private BiConsumer<SD, TD> documentExtender = (source, target) -> {};
 	
+	/**
+	 * All field configurations.
+	 */
 	final MultiMap<String, FCT> fieldConfigurations = new MultiMap<>();
 	
+	/**
+	 * Mapper to create the name for the index, based on databasename and collectionname. 
+	 * Default index name: name of the collection
+	 * 
+	 * Attention: This mapper has no effect on the LuceneAdapter.
+	 */
 	@Getter
 	@Setter
 	private BiFunction<String, String, String> indexNameMapper = (database, collection) -> collection;
 	
+	/**
+	 * Add a field configuration for a collection.
+	 * 
+	 * @param collection
+	 * @param fieldConfig 
+	 */
 	public void addFieldConfiguration (final String collection, final FCT fieldConfig) {
 		fieldConfigurations.put(collection, fieldConfig);
 	}
 	
+	/**
+	 * Returns all field configurations for a collection.
+	 * 
+	 * @param collection
+	 * @return 
+	 */
 	public Collection<FCT> getFieldConfigurations (final String collection) {
 		return fieldConfigurations.get(collection);
 	}
+	/**
+	 * Checks if there are field configurations for a collection.
+	 * 
+	 * @param collection
+	 * @return 
+	 */
 	public boolean hasFieldConfigurations (final String collection) {
 		return fieldConfigurations.containsKey(collection);
 	}

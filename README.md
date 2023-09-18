@@ -175,3 +175,19 @@ indexAdapter.open(osClient);
 mongoSearch = new MongoSearch();
 mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 ```
+
+## Commands
+
+In manchen Situationen ist es nötig
+
+### InitializeCommand
+The InitializeCommand iterates over all documents in the list of collections and adds them to the index.
+```java
+mongoSearch.executeCommand(new InitializeCommand(List.of("collectionA", "collectionB")));
+```
+
+### ReIndexCollectionCommand
+The ReIndexCollectionCommand is used to index only documents of a single collection.
+```java
+mongoSearch.executeCommand(new ReIndexCollectionCommand("collectionA"));
+```

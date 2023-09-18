@@ -1,13 +1,12 @@
 package com.github.thmarx.mongo.search.index.configuration;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
 import com.github.thmarx.mongo.search.mapper.FieldMapper;
 
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import lombok.Builder;
 
 /*-
  * #%L
@@ -30,17 +29,30 @@ import java.util.function.Supplier;
  */
 
 /**
+ * Class for field configurations.
+ * An index implementation can have a custom subclass.
  *
  * @author t.marx
  */
 @SuperBuilder
 @Getter
 public class FieldConfiguration {
+	/**
+	 * The name of the field in the mongodb document.
+	 */
 	private final String fieldName;
+	/**
+	 * The name of the field in the index.
+	 */
 	private final String indexFieldName;
-
+	/**
+	 * The mapper for the field value.
+	 */
 	private final FieldMapper<?> mapper;
 	
+	/**
+	 * Supplier for default value if the mapper returns null of an empty list.
+	 */
 	@Builder.Default
 	private Supplier<?> defaultValue = () -> null;
 }
