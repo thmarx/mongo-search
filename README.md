@@ -115,3 +115,63 @@ indexAdapter.open(esClient);
 mongoSearch = new MongoSearch();
 mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 ```
+
+### OpenSearch
+
+```java
+OpensearchIndexConfiguration configuration = new OpensearchIndexConfiguration();
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("name")
+		.indexFieldName("name")
+		.mapper(FieldMappers::toString)
+		.build()
+);
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("tags")
+		.indexFieldName("tags")
+		.mapper(ListFieldMappers::toString)
+		.build()
+);
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("cities.name")
+		.indexFieldName("cities")
+		.mapper(ListFieldMappers::toString)
+		.build()
+);
+
+indexAdapter = new OpensearchIndexAdapter(configuration);
+indexAdapter.open(osClient);
+
+mongoSearch = new MongoSearch();
+mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
+```
+
+### OpenSearch
+
+```java
+SolrIndexConfiguration configuration = new SolrIndexConfiguration();
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("name")
+		.indexFieldName("name")
+		.mapper(FieldMappers::toString)
+		.build()
+);
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("tags")
+		.indexFieldName("tags")
+		.mapper(ListFieldMappers::toString)
+		.build()
+);
+configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, FieldConfiguration.builder()
+		.fieldName("cities.name")
+		.indexFieldName("cities")
+		.mapper(ListFieldMappers::toString)
+		.build()
+);
+
+indexAdapter = new SolrIndexAdapter(configuration);
+indexAdapter.open(osClient);
+
+mongoSearch = new MongoSearch();
+mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
+```
