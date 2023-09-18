@@ -21,8 +21,6 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
  */
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.facet.FacetsConfig;

@@ -24,8 +24,10 @@ package com.github.thmarx.mongo.search.index;
  * #L%
  */
 
-import com.github.thmarx.mongo.trigger.Event;
-import com.github.thmarx.mongo.trigger.MongoTriggers;
+import com.github.thmarx.mongo.connect.CollectionFunction;
+import com.github.thmarx.mongo.connect.DatabaseFunction;
+import com.github.thmarx.mongo.connect.Event;
+import com.github.thmarx.mongo.connect.MongoConnect;
 import com.mongodb.client.MongoDatabase;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
-import com.github.thmarx.mongo.trigger.CollectionTrigger;
-import com.github.thmarx.mongo.trigger.DatabaseTrigger;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +51,7 @@ public class MongoSearch implements AutoCloseable {
 
 	Updater updater;
 
-	MongoTriggers mongoTriggers;
+	MongoConnect mongoConnect;
 
 	ExecutorService executorService;
 
@@ -68,7 +68,7 @@ public class MongoSearch implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		executorService.shutdown();
-		mongoTriggers.close();
+		mongoConnect.close();
 		indexAdapter.close();
 	}
 
@@ -88,29 +88,24 @@ public class MongoSearch implements AutoCloseable {
 
 		updater = new Updater(indexAdapter, collections);
 
-		mongoTriggers = new MongoTriggers();
-		mongoTriggers.register((type, databasename) -> {
-
-			if (DatabaseTrigger.Type.DROPPED.equals(type)) {
-				updater.dropDatabase(databasename);
-			}
+		mongoConnect = new MongoConnect();
+		mongoConnect.register(Event.DROP, (databasename) -> {
+			updater.dropDatabase(databasename);
 		});
-		mongoTriggers.register((type, databasename, collectionname) -> {
-			if (CollectionTrigger.Type.DROPPED.equals(type)) {
-				updater.dropCollection(databasename, collectionname);
-			}
+		mongoConnect.register(Event.DROP, (databasename, collectionname) -> {
+			updater.dropCollection(databasename, collectionname);
 		});
-		mongoTriggers.register(Event.INSERT, (databasename, collectionname, document) -> {
+		mongoConnect.register(Event.INSERT, (databasename, collectionname, document) -> {
 			updater.insert(document);
 		});
-		mongoTriggers.register(Event.DELETE, (databasename, collectionname, document) -> {
+		mongoConnect.register(Event.DELETE, (databasename, collectionname, document) -> {
 			updater.delete(document);
 		});
-		mongoTriggers.register(Event.UPDATE, (databasename, collectionname, document) -> {
+		mongoConnect.register(Event.UPDATE, (databasename, collectionname, document) -> {
 			updater.update(document);
 		});
 
-		mongoTriggers.open(database);
+		mongoConnect.open(() -> database.watch());
 
 		indexAdapter.startQueueWorker();
 	}

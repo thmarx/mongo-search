@@ -19,7 +19,7 @@
 		<mongodb-driver-sync.version>4.10.2</mongodb-driver-sync.version>
 		<mongodb-crypt.version>1.8.0</mongodb-crypt.version>
 
-		<mongo-trigger.version>0.4</mongo-trigger.version>
+		<mongo-connect.version>0.5</mongo-connect.version>
 		<mongo-directory.version>1.0.0</mongo-directory.version>
 	</properties>
 	<inceptionYear>2023</inceptionYear>
@@ -45,9 +45,9 @@
 		<dependencies>
 
 			<dependency>
-				<groupId>com.github.thmarx.mongo.trigger</groupId>
-				<artifactId>mongo-trigger-core</artifactId>
-				<version>${mongo-trigger.version}</version>
+				<groupId>com.github.thmarx.mongo.connect</groupId>
+				<artifactId>mongo-connect</artifactId>
+				<version>${mongo-connect.version}</version>
 			</dependency>
 
 			<dependency>
