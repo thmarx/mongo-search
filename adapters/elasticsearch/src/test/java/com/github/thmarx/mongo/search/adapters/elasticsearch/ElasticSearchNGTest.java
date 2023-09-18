@@ -46,12 +46,13 @@ import com.mongodb.client.model.Updates;
 
 import co.elastic.clients.elasticsearch.core.CountResponse;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import com.mongodb.client.result.InsertOneResult;
 
 /**
  *
  * @author t.marx
  */
-public class MongoSearcherTest extends AbstractContainerTest {
+public class ElasticSearchNGTest extends AbstractContainerTest {
 
 	MongoSearch mongoSearch;
 
@@ -62,7 +63,7 @@ public class MongoSearcherTest extends AbstractContainerTest {
 	private final static String COLLECTION_DOKUMENTE = "dokumente";	
 
 	@BeforeMethod
-	public void cleanup() throws IOException {
+	public void cleanup() throws IOException, InterruptedException {
 
 		database = mongoClient.getDatabase("search");
 
@@ -105,6 +106,8 @@ public class MongoSearcherTest extends AbstractContainerTest {
 
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
+		
+		Thread.sleep(500);
 	}
 	
 	@AfterMethod
@@ -114,9 +117,6 @@ public class MongoSearcherTest extends AbstractContainerTest {
 
 	@Test
 	public void test_insert() throws IOException, InterruptedException {
-
-		Thread.sleep(2000);
-		
 		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
@@ -129,26 +129,15 @@ public class MongoSearcherTest extends AbstractContainerTest {
 
 		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
 	}
-
-	@Test
-	public void test_delete() throws IOException, InterruptedException {
-
-		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
-		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
-		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
-
-		database.getCollection(COLLECTION_DOKUMENTE).deleteMany(Filters.empty());
-
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
-		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
-	}
-
+	
 	@Test
 	public void test_update() throws IOException, InterruptedException {
-
+		
 		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		
+		indexAdapter.commit();
+		
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
 
@@ -164,10 +153,25 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		
 		database.getCollection(COLLECTION_DOKUMENTE).updateOne(Filters.eq("_id", id), update);
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+		indexAdapter.commit();
+		Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
 			GetResponse<Map> get = esClient.get(fn -> fn.id(id.toString()).index(COLLECTION_DOKUMENTE), Map.class);
 			return get.found() && get.source().containsKey("tags");
 		});
+	}
+
+	@Test
+	public void test_delete() throws IOException, InterruptedException {
+
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
+
+		database.getCollection(COLLECTION_DOKUMENTE).deleteMany(Filters.empty());
+
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 	}
 	
 	@Test
@@ -187,7 +191,7 @@ public class MongoSearcherTest extends AbstractContainerTest {
 	private void insertDocument(final String collectionName, final Map attributes) {
 		MongoCollection<Document> collection = database.getCollection(collectionName);
 		Document document = new Document(attributes);
-		collection.insertOne(document);
+		InsertOneResult insertOne = collection.insertOne(document);
 	}
 
 	private void deleteDocument(final String collectionName, final String uid) {

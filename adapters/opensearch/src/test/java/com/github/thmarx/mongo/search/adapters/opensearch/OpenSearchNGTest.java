@@ -72,57 +72,19 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class MongoSearcherTest extends AbstractContainerTest {
+public class OpenSearchNGTest extends AbstractContainerTest {
 
 	static String PASSWORD = "AgY7KUJwb5M*e36Y3=gb";
 
-	MongoClient client;
 
 	MongoSearch mongoSearch;
 
-	private MongoDatabase database;
-
 	private OpensearchIndexAdapter indexAdapter;
-
-	OpenSearchClient osClient;
 
 	private final static String COLLECTION_DOKUMENTE = "dokumente";
 
-	@BeforeClass
-	public void setup() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-
-		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(opensearchContainer.getUsername(), opensearchContainer.getPassword());
-		credentialsProvider.setCredentials(AuthScope.ANY, credentials);
-
-		final HttpHost host = HttpHost.create(opensearchContainer.getHttpHostAddress());
-
-		final SSLContext sslcontext = SSLContextBuilder.create()
-            .loadTrustMaterial(null, new TrustAllStrategy())
-            .build();
-		//Initialize the client with SSL and TLS enabled
-		final RestClient restClient = RestClient.builder(host).
-				setHttpClientConfigCallback((HttpAsyncClientBuilder httpClientBuilder) -> 
-					httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider).setSSLContext(sslcontext)
-		).build();
-
-		final OpenSearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-		this.osClient = new OpenSearchClient(transport);
-
-		//client = MongoClients.create(connectionString);
-		client = MongoClients.create(mongdbContainer.getConnectionString());
-
-		database = client.getDatabase("search");
-	}
-
-	@AfterClass
-	public void shutdown() throws Exception {
-		client.close();
-		osClient.shutdown();
-	}
-
 	@BeforeMethod
-	public void cleanup() throws IOException {
+	public void init() throws IOException, InterruptedException {
 		if (osClient.indices().exists((fn) -> fn.index(COLLECTION_DOKUMENTE)).value()) {
 			osClient.indices().delete((b) -> b.index(COLLECTION_DOKUMENTE));
 		}
@@ -163,6 +125,8 @@ public class MongoSearcherTest extends AbstractContainerTest {
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 		mongoSearch.execute(new InitializeCommand(List.of(COLLECTION_DOKUMENTE)));
+		
+		Thread.sleep(200);
 	}
 
 	@AfterMethod
@@ -172,8 +136,6 @@ public class MongoSearcherTest extends AbstractContainerTest {
 
 	@Test
 	public void test_insert() throws IOException, InterruptedException {
-
-		Thread.sleep(2000);
 
 		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 

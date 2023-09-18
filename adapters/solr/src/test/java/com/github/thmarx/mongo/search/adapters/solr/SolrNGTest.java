@@ -51,7 +51,7 @@ import org.testng.annotations.Test;
  *
  * @author t.marx
  */
-public class SolrMongoSearcherTest extends AbstractContainerTest {
+public class SolrNGTest extends AbstractContainerTest {
 
 	MongoSearch mongoSearch;
 
@@ -60,7 +60,7 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 	private final static String COLLECTION_DOKUMENTE = "dokumente";
 
 	@BeforeMethod
-	public void beforeMethod() throws IOException, SolrServerException {
+	public void beforeMethod() throws IOException, SolrServerException, InterruptedException {
 		if (database.getCollection(COLLECTION_DOKUMENTE) != null) {
 			database.getCollection(COLLECTION_DOKUMENTE).drop();
 		}
@@ -80,10 +80,12 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(adapter, database, List.of(COLLECTION_DOKUMENTE));
-
+		
 		CollectionAdminRequest col = CollectionAdminRequest.createCollection("dokumente", 1, 1);
 
 		NamedList<Object> request = solrClient.request(col);
+		
+		Thread.sleep(200);
 	}
 
 	@AfterMethod
@@ -97,8 +99,6 @@ public class SolrMongoSearcherTest extends AbstractContainerTest {
 
 	@Test
 	public void test_insert() throws IOException, InterruptedException, SolrServerException {
-
-		Thread.sleep(2000);
 
 		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 

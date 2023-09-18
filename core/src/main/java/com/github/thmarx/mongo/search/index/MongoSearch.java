@@ -24,8 +24,6 @@ package com.github.thmarx.mongo.search.index;
  * #L%
  */
 
-import com.github.thmarx.mongo.connect.CollectionFunction;
-import com.github.thmarx.mongo.connect.DatabaseFunction;
 import com.github.thmarx.mongo.connect.Event;
 import com.github.thmarx.mongo.connect.MongoConnect;
 import com.mongodb.client.MongoDatabase;

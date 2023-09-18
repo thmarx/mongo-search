@@ -10,6 +10,7 @@ import org.apache.lucene.facet.FacetsConfig;
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.Storage;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
+import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,8 +48,10 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 	@Setter
 	FacetsConfig facetsConfig;
 	
+	@Getter
+	@Setter
+	long commitDelaySeconds = 1;
 	
-
 	@Getter
 	@Setter
 	DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;

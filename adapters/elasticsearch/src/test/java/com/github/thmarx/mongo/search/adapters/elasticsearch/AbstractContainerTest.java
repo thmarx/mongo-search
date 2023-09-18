@@ -67,9 +67,8 @@ public class AbstractContainerTest {
 	@BeforeClass
 	public void up() {
 		elasticSearchContainer = new ElasticsearchContainer(DockerImageName.parse(
-				"docker.elastic.co/elasticsearch/elasticsearch:8.9.1-amd64"));
+				"docker.elastic.co/elasticsearch/elasticsearch:8.9.2"));
 		elasticSearchContainer.withStartupTimeout(Duration.ofSeconds(120));
-		elasticSearchContainer.withLogConsumer((frame) -> System.out.println(frame.getUtf8StringWithoutLineEnding()));
 		elasticSearchContainer.start();
 
 		mongdbContainer = new MongoDBContainer(DockerImageName.parse(

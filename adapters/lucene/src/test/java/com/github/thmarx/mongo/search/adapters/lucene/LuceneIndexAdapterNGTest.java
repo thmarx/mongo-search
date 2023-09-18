@@ -3,11 +3,8 @@ package com.github.thmarx.mongo.search.adapters.lucene;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +101,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
 				Map.of("name", new GermanAnalyzer()));
 		configuration.setAnalyzer(perFieldAnalyzerWrapper);
-
+		configuration.setCommitDelaySeconds(1);
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setFacetsConfig(facetConfig);
 		configuration.setDocumentExtender((source, target) -> {
@@ -166,6 +163,8 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(luceneIndexAdapter, database, List.of("dokumente", "bilder"));
 		mongoSearch.execute(new InitializeCommand(List.of("dokumente", "bilder")));
+		
+		Thread.sleep(500);
 	}
 
 	@AfterMethod
@@ -176,29 +175,25 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	@Test
 	public void test_insert() throws IOException, InterruptedException {
 
-		Thread.sleep(2000);
-
 		luceneIndexAdapter.commit();
 
 		assertCollectionSize("dokumente", 0);
 
 		insertDocument("dokumente", Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") > 0);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
 
 		assertCollectionSize("dokumente", 1);
 
 		insertDocument("dokumente", Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
 
 		assertCollectionSize("dokumente", 2);
 	}
 
 	@Test
 	public void test_delete() throws IOException, InterruptedException {
-
-		Thread.sleep(2000);
 
 		luceneIndexAdapter.commit();
 
@@ -223,8 +218,6 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 	@Test
 	public void test_mapper() throws IOException, InterruptedException {
-
-		Thread.sleep(2000);
 
 		luceneIndexAdapter.commit();
 
@@ -269,8 +262,6 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	@Test
 	public void test_date() throws IOException, InterruptedException {
 
-		Thread.sleep(2000);
-
 		luceneIndexAdapter.commit();
 
 		assertCollectionSize("dokumente", 0);
@@ -281,7 +272,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		var indexedDateValue = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now());
 
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
 		try {
@@ -300,8 +291,6 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	@Test
 	public void test_boolean() throws IOException, InterruptedException {
 
-		Thread.sleep(2000);
-
 		luceneIndexAdapter.commit();
 
 		assertCollectionSize("dokumente", 0);
@@ -314,7 +303,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				"name", "thorsten",
 				"draft", true));
 		
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
 		try {
@@ -331,8 +320,6 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 	@Test
 	public void test_combine_fields() throws IOException, InterruptedException {
-
-		Thread.sleep(2000);
 
 		luceneIndexAdapter.commit();
 
@@ -410,7 +397,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				"name", "lara",
 				"tags", List.of("drei", "zwei")));
 
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
 
 		luceneIndexAdapter.commit();
 

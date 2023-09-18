@@ -133,7 +133,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 			} catch (Exception e) {
 				log.error("", e);
 			}
-		}, 1, 10, TimeUnit.SECONDS);
+		}, 1, configuration.getCommitDelaySeconds(), TimeUnit.SECONDS);
 
 		queueWorker = new PausableThread(true) {
 			@Override

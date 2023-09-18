@@ -25,7 +25,6 @@ package com.github.thmarx.mongo.search.adapters.elasticsearch;
  */
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
@@ -75,7 +74,8 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		dropCollection(message);
 	}
 
-	public void commit() {
+	public void commit() throws IOException {
+		esClient.indices().refresh();
 	}
 
 	@Override

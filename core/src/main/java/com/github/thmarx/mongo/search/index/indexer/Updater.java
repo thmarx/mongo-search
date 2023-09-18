@@ -33,12 +33,14 @@ import com.github.thmarx.mongo.search.index.messages.UpdateMessage;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 
 /**
  *
  * @author t.marx
  */
+@Slf4j
 @RequiredArgsConstructor
 public class Updater {
 
@@ -48,6 +50,8 @@ public class Updater {
 
 	public void insert(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
+		
+		log.trace("delete from " + collection);
 		
 		if (!collections.contains(collection)) {
 			return;
@@ -63,6 +67,8 @@ public class Updater {
 	public void update(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
 		
+		log.trace("update in " + collection);
+		
 		if (!collections.contains(collection)) {
 			return;
 		}
@@ -77,6 +83,8 @@ public class Updater {
 	public void delete(ChangeStreamDocument<Document> document) {
 		var collection = document.getNamespace().getCollectionName();
 		
+		log.trace("delete from " + collection);
+		
 		if (!collections.contains(collection)) {
 			return;
 		}
@@ -89,6 +97,7 @@ public class Updater {
 	}
 
 	public void dropCollection(final String database, final String collection) {
+		log.trace("drop collection " + collection);
 		if (!collections.contains(collection)) {
 			return;
 		}
@@ -98,6 +107,7 @@ public class Updater {
 	}
 
 	public void dropDatabase(final String database) {
+		log.trace("drop database " + database);
 		var command = new DropDatabaseMessage(database);
 		indexAdapter.enqueueMessage(command);
 	}
