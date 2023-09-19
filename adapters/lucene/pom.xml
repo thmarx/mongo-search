@@ -20,7 +20,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>gom.githb.thmarx.mongo.directory</groupId>
+			<groupId>com.github.thmarx.mongo.directory</groupId>
   			<artifactId>mongo-directory</artifactId>
 		</dependency>
 		

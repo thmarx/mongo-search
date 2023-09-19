@@ -100,9 +100,13 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 	@Override
 	public void close() throws Exception {
 		log.debug("close lucene index adapter");
-		scheduler.shutdown();
+		log.debug("stop scheduler");
+		scheduler.shutdownNow();
+		log.debug("stop queue worker");
 		queueWorker.stop();
+		log.debug("stop queue worker thread");
 		queueWorkerThread.interrupt();
+		log.debug("stop lucene index");
 		luceneIndex.close();
 	}
 
@@ -123,9 +127,9 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 		scheduler.scheduleWithFixedDelay(() -> {
 			try {
-				log.debug("commit index");
+				log.trace("commit index");
 				luceneIndex.commit();
-				log.debug("commited");
+				log.trace("commited");
 			} catch (Exception e) {
 				log.error("", e);
 			}

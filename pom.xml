@@ -19,8 +19,8 @@
 		<mongodb-driver-sync.version>4.10.2</mongodb-driver-sync.version>
 		<mongodb-crypt.version>1.8.0</mongodb-crypt.version>
 
-		<mongo-connect.version>0.5</mongo-connect.version>
-		<mongo-directory.version>1.0.0</mongo-directory.version>
+		<mongo-connect.version>0.6</mongo-connect.version>
+		<mongo-directory.version>1.0.1</mongo-directory.version>
 	</properties>
 	<inceptionYear>2023</inceptionYear>
 	<organization>
@@ -57,7 +57,7 @@
 			</dependency>
 
 			<dependency>
-				<groupId>gom.githb.thmarx.mongo.directory</groupId>
+				<groupId>com.github.thmarx.mongo.directory</groupId>
 				<artifactId>mongo-directory</artifactId>
 				<version>${mongo-directory.version}</version>
 			</dependency>

@@ -59,7 +59,7 @@ public class MongoDbStorage implements Storage {
 
     @Override
     public void open() throws IOException {
-        directory = new DistributedDirectory(new MongoDirectory(mongoClient, database, indexName, sharding));
+        directory = new DistributedDirectory(new MongoDirectory(mongoClient, database, indexName));
     }
     
 }
