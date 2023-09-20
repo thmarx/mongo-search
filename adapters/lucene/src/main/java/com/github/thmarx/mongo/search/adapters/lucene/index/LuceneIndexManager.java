@@ -20,43 +20,38 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class LuceneIndexManager implements AutoCloseable {
 	
-	private ConcurrentMap<Key, LuceneIndex> indices = new ConcurrentHashMap<>();
+	private ConcurrentMap<String, LuceneIndex> indices = new ConcurrentHashMap<>();
 	
 	private final LuceneIndexConfiguration indexConfiguration;
 	
-	public boolean hasIndices (final String database) {
-		return indices.keySet().stream().anyMatch(key -> key.database.equals(database));
-	}
-	
-	public void dropIndices (final String database) {
-		indices.entrySet().stream().filter((entry) -> entry.getKey().database.equals(database)).forEach(entry -> {
+	public void dropAllIndices () {
+		indices.entrySet().forEach(entry -> {
 			try {
-				var indexName = indexConfiguration.getIndexNameMapper().apply(entry.getKey().database, entry.getKey().collection);
 				entry.getValue().close();
-				indexConfiguration.getStorage().deleteDirectoy(indexName);
+				indexConfiguration.getStorage().deleteDirectoy(entry.getKey());
 			} catch (Exception ex) {
-				log.error("error deleting index", ex);
+				log.error("error dropping index", ex);
 			}
 		});
+		indices.clear();
 	}
 	
 	public LuceneIndex createOrGet (final String database, final String collection) throws IOException {
-		var key = new Key(database, collection);
-		if (!indices.containsKey(key)) {
+		var indexName = indexConfiguration.getIndexNameMapper().apply(database, collection);
+		if (!indices.containsKey(indexName)) {
 			createIndex(database, collection);
 		}
 		
-		return indices.get(key);
+		return indices.get(indexName);
 	}
 
 	private synchronized void createIndex(final String database, final String collection) throws IOException {
 		
-		var key = new Key(database, collection);
 		var indexName = indexConfiguration.getIndexNameMapper().apply(database, collection);
 		
 		LuceneIndex index = new LuceneIndex(indexName, indexConfiguration);
 		index.open();
-		indices.put(key, index);
+		indices.put(indexName, index);
 	}
 
 	@Override
@@ -79,7 +74,4 @@ public class LuceneIndexManager implements AutoCloseable {
 			}
 		});
 	}
-	
-	public record Key(String database, String collection){}
-	
 }

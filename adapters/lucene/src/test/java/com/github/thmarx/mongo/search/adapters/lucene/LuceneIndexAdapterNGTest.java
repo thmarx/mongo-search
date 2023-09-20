@@ -81,19 +81,22 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	private LuceneIndexAdapter luceneIndexAdapter;
 
 	private FacetsConfig facetConfig = new FacetsConfig();
+	
+	private static final String COLLECTION_DOKUMENTE = "dokumente";
+	private static final String DB_SEARCH = "search";
 
 	@BeforeMethod
 	public void setup() throws IOException, InterruptedException {
 
-		database = mongoClient.getDatabase("search");
+		database = mongoClient.getDatabase(DB_SEARCH);
 
 		FileUtil.delete(Path.of("target/index"));
 		Files.createDirectories(Path.of("target/index"));
 
-		if (database.getCollection("dokumente") != null) {
-			database.getCollection("dokumente").drop();
+		if (database.getCollection(COLLECTION_DOKUMENTE) != null) {
+			database.getCollection(COLLECTION_DOKUMENTE).drop();
 		}
-		database.createCollection("dokumente");
+		database.createCollection(COLLECTION_DOKUMENTE);
 
 		facetConfig.setMultiValued("tags", true);
 		LuceneIndexConfiguration configuration = new LuceneIndexConfiguration();
@@ -113,7 +116,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 			}
 		});
 
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("name")
 				.indexFieldName("name")
 				.stored(true)
@@ -121,14 +124,14 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.build());
 
 		facetConfig.setMultiValued("tags", true);
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("tags") 
 				.indexFieldName("tags")
 				.stored(true)
 				.keyword(true)
 				.mapper(ListFieldMappers::toString)
 				.build());
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("cities.name")
 				.indexFieldName("cities")
 				.defaultValue(() -> "K-Town")
@@ -136,21 +139,21 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 				.mapper(ListFieldMappers::toString)
 				.build());
 
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("ort.name")
 				.indexFieldName("cities")
 				.stored(true)
 				.mapper(FieldMappers::toString)
 				.build());
 
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("created")
 				.indexFieldName("created")
 				.stored(true)
 				.dateFormatter(DateTimeFormatter.ISO_LOCAL_DATE)
 				.mapper(FieldMappers::toDate)
 				.build());
-		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
+		configuration.addFieldConfiguration(COLLECTION_DOKUMENTE, LuceneFieldConfiguration.builder()
 				.fieldName("draft")
 				.indexFieldName("draft")
 				.stored(true)
@@ -161,8 +164,8 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		luceneIndexAdapter.open();
 
 		mongoSearch = new MongoSearch();
-		mongoSearch.open(luceneIndexAdapter, database, List.of("dokumente", "bilder"));
-		mongoSearch.execute(new InitializeCommand(List.of("dokumente", "bilder")));
+		mongoSearch.open(luceneIndexAdapter, database, List.of(COLLECTION_DOKUMENTE, "bilder"));
+		mongoSearch.execute(new InitializeCommand(List.of(COLLECTION_DOKUMENTE, "bilder")));
 		
 		Thread.sleep(500);
 	}
@@ -177,19 +180,19 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
 
-		assertCollectionSize("dokumente", 1);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
 
-		insertDocument("dokumente", Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 
-		assertCollectionSize("dokumente", 2);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 2);
 	}
 
 	@Test
@@ -197,23 +200,23 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of("name", "thorsten"));
-		insertDocument("dokumente", Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
+		insertDocument(COLLECTION_DOKUMENTE, Map.of("name", "thorsten"));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 
-		IndexSearcher searcher = luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().acquire();
+		IndexSearcher searcher = luceneIndexAdapter.getIndex(DB_SEARCH, COLLECTION_DOKUMENTE).getSearcherManager().acquire();
 		try {
 			var uid = searcher.getIndexReader().storedFields().document(0).get("_id");
-			deleteDocument("dokumente", uid);
+			deleteDocument(COLLECTION_DOKUMENTE, uid);
 		} finally {
-			luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().release(searcher);
+			luceneIndexAdapter.getIndex(DB_SEARCH, COLLECTION_DOKUMENTE).getSearcherManager().release(searcher);
 		}
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
-		assertCollectionSize("dokumente", 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 1);
 	}
 
 	@Test
@@ -221,9 +224,9 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"tags", List.of("eins", "zwei"),
 				"cities", List.of(
@@ -231,7 +234,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 						Map.of("name", "Dortmund"),
 						Map.of("name", "Essen"))));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) > 0);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
@@ -264,15 +267,15 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"created", LocalDateTime.now()));
 
 		var indexedDateValue = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now());
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 1);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
@@ -293,17 +296,17 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"draft", false));
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"draft", true));
 		
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
@@ -323,9 +326,9 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"tags", List.of("eins", "zwei"),
 				"cities", List.of(
@@ -334,7 +337,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 						Map.of("name", "Essen")),
 				"ort", Map.of("name", "Kaiserslautern")));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) > 0);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
@@ -358,13 +361,13 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"tags", List.of("eins", "zwei")));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) > 0);
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
@@ -388,16 +391,16 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		assertCollectionSize("dokumente", 0);
+		assertCollectionSize(COLLECTION_DOKUMENTE, 0);
 
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "thorsten",
 				"tags", List.of("eins", "zwei")));
-		insertDocument("dokumente", Map.of(
+		insertDocument(COLLECTION_DOKUMENTE, Map.of(
 				"name", "lara",
 				"tags", List.of("drei", "zwei")));
 
-		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOKUMENTE) == 2);
 
 		luceneIndexAdapter.commit();
 
@@ -409,7 +412,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 	}
 
 	private Set<String> getSortedSetFacet(final String fieldName) throws IOException {
-		IndexSearcher searcher = luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().acquire();
+		IndexSearcher searcher = luceneIndexAdapter.getIndex(DB_SEARCH, COLLECTION_DOKUMENTE).getSearcherManager().acquire();
 		try {
 			/*
 			 * SortedSetDocValues sortedSetValues =
@@ -427,7 +430,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 			FacetsCollector collector = new FacetsCollector();
 
-			TermQuery collectionQuery = new TermQuery(new Term("_collection", "dokumente"));
+			TermQuery collectionQuery = new TermQuery(new Term("_collection", COLLECTION_DOKUMENTE));
 
 			FacetsCollector.search(searcher, collectionQuery, 10, collector);
 			Facets facets = new SortedSetDocValuesFacetCounts(state, collector);
@@ -437,7 +440,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 			return fieldValues;
 		} finally {
-			luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().release(searcher);
+			luceneIndexAdapter.getIndex(DB_SEARCH, COLLECTION_DOKUMENTE).getSearcherManager().release(searcher);
 		}
 	}
 
@@ -454,7 +457,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 	private int getSize(final String collection) throws IOException {
 
-		return luceneIndexAdapter.size("search", collection);
+		return luceneIndexAdapter.size(DB_SEARCH, collection);
 	}
 
 	private void assertCollectionSize(final String collection, int size) throws IOException {

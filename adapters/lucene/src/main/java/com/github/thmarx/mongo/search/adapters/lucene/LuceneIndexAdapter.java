@@ -177,9 +177,7 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 						var luceneIndex = indexManager.createOrGet(dropCollection.database(), dropCollection.collection());
 						luceneIndex.deleteDocuments(query);
 					} else if (command instanceof DropDatabaseMessage dropDatabase) {
-						if (indexManager.hasIndices(dropDatabase.database())) {
-							indexManager.dropIndices(dropDatabase.database());
-						}
+						indexManager.dropAllIndices();
 					}
 				} catch (InterruptedException ex) {
 					// nothing to do
