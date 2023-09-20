@@ -103,10 +103,10 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
 				Map.of("name", new GermanAnalyzer()));
-		configuration.setAnalyzer(perFieldAnalyzerWrapper);
+		configuration.setDefaultAnalyzer(perFieldAnalyzerWrapper);
 		configuration.setCommitDelaySeconds(1);
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
-		configuration.setFacetsConfig(facetConfig);
+		configuration.setDefaultFacetsConfig(facetConfig);
 		configuration.setDocumentExtender((source, target) -> {
 			var values = ListFieldMappers.toString("tags", source);
 			if (values != null && !values.isEmpty()) {

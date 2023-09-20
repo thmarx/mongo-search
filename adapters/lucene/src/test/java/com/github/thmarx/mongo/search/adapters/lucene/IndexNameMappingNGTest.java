@@ -105,10 +105,10 @@ public class IndexNameMappingNGTest extends AbstractContainerTest {
 
 		PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
 				Map.of("name", new GermanAnalyzer()));
-		configuration.setAnalyzer(perFieldAnalyzerWrapper);
+		configuration.setDefaultAnalyzer(perFieldAnalyzerWrapper);
 		configuration.setCommitDelaySeconds(1);
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
-		configuration.setFacetsConfig(facetConfig);
+		configuration.setDefaultFacetsConfig(facetConfig);
 		// index multiple collections into same index
 		configuration.setIndexNameMapper((db, col) -> db);
 		configuration.setDocumentExtender((source, target) -> {

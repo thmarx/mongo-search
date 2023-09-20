@@ -44,12 +44,12 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 	Storage storage;
 	
 	@Setter
-	Analyzer analyzer;
+	Analyzer defaultAnalyzer;
 	
 	Map<String, Analyzer> analyzersPerIndex = new HashMap<>();
 
 	@Setter
-	FacetsConfig facetsConfig;
+	FacetsConfig defaultFacetsConfig;
 	
 	Map<String, FacetsConfig> facetConfigPerIndex = new HashMap<>();
 	
@@ -74,7 +74,7 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 		if (analyzersPerIndex.containsKey(index)) {
 			return analyzersPerIndex.get(index);
 		}
-		return analyzer;
+		return defaultAnalyzer;
 	}
 	
 	public LuceneIndexConfiguration addAnalyzer (final String index, final Analyzer analyzer) {
@@ -86,7 +86,7 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 		if (facetConfigPerIndex.containsKey(index)) {
 			return facetConfigPerIndex.get(index);
 		}
-		return facetsConfig;
+		return defaultFacetsConfig;
 	}
 	
 	public LuceneIndexConfiguration addFacetConfig (final String index, final FacetsConfig facetConfig) {
