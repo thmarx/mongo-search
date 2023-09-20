@@ -48,13 +48,11 @@ public class LuceneIndex {
 	
 	private final LuceneIndexConfiguration configuration;
 	private final String name;
-	FacetsConfig facetsConfig = null;
 	Directory directory;
 
 	public LuceneIndex(String name, LuceneIndexConfiguration configuration) {
 		this.name = name;
 		this.configuration = configuration;
-		this.facetsConfig = configuration.facetsConfig;
 	}
 
 	public LuceneIndex open() throws IOException {
@@ -62,7 +60,7 @@ public class LuceneIndex {
 		this.directory = configuration.getStorage().createDirectory(name);
 		
 		NRTCachingDirectory cachedFSDir = new NRTCachingDirectory(this.directory, 5.0, 60.0);
-		IndexWriterConfig conf = new IndexWriterConfig(configuration.getAnalyzer());
+		IndexWriterConfig conf = new IndexWriterConfig(configuration.getAnalyzer(this.name));
 		conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 		writer = new IndexWriter(cachedFSDir, conf);
 		
@@ -76,6 +74,7 @@ public class LuceneIndex {
 	}
 	
 	public void index (final Document document) throws IOException {
+		var facetsConfig = configuration.getFacetsConfig(name);
 		if (facetsConfig != null) {
 			writer.addDocument(facetsConfig.build(document));
 		} else {

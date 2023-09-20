@@ -2,6 +2,8 @@ package com.github.thmarx.mongo.search.index.configuration;
 
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -36,11 +38,14 @@ import lombok.Setter;
  */
 public class IndexConfiguration<SD, TD, FCT extends FieldConfiguration> {
 	/**
-	 * Extender for the document. It's used to add fields to the index document which are not in the mongodb document.
+	 * Default extender for the document. It's used to add fields to the index document which are not in the mongodb document.
 	 */
-    @Getter
     @Setter
 	private BiConsumer<SD, TD> documentExtender = (source, target) -> {};
+	/**
+	 * Document extender configured per index.
+	 */
+	Map<String, BiConsumer<SD, TD>> documentExtendersPerIndex = new HashMap<>();
 	
 	/**
 	 * All field configurations.
@@ -84,5 +89,30 @@ public class IndexConfiguration<SD, TD, FCT extends FieldConfiguration> {
 	 */
 	public boolean hasFieldConfigurations (final String collection) {
 		return fieldConfigurations.containsKey(collection);
+	}
+	
+	/**
+	 * Add document extender for specific index.
+	 * @param index
+	 * @param extender 
+	 */
+	public void addDocumentExtender (final String index, BiConsumer<SD, TD> extender) {
+		documentExtendersPerIndex.put(index, extender);
+	}
+	
+	/**
+	 * Get the document extender for an index.
+	 * If no extender is configured, the default extender is used.
+	 * 
+	 * @param index
+	 * @return 
+	 */
+	public BiConsumer<SD, TD> getDocumentExtender (final String index) {
+		if (documentExtendersPerIndex.containsKey(index)) {
+			return documentExtendersPerIndex.get(index);
+		}
+		
+		
+		return documentExtender;
 	}
 }

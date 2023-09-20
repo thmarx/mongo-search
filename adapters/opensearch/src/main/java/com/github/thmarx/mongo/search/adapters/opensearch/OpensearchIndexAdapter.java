@@ -132,8 +132,9 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 			});
 		}
 
-		if (configuration.getDocumentExtender() != null) {
-			configuration.getDocumentExtender().accept(document, indexDocument);
+		var extender = configuration.getDocumentExtender(configuration.getIndexNameMapper().apply(database, collection));
+		if (extender != null) {
+			extender.accept(document, indexDocument);
 		}
 
 		return indexDocument;

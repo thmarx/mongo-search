@@ -1,7 +1,6 @@
 package com.github.thmarx.mongo.search.adapters.lucene.index;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -9,11 +8,12 @@ import org.apache.lucene.facet.FacetsConfig;
 
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.Storage;
 import com.github.thmarx.mongo.search.index.configuration.IndexConfiguration;
-import com.github.thmarx.mongo.search.index.utils.MultiMap;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /*-
  * #%L
@@ -39,14 +39,19 @@ import lombok.Setter;
  *
  * @author t.marx
  */
+@Accessors(chain = true)
 public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Document, Document, LuceneFieldConfiguration> {
 	Storage storage;
 	
+	@Setter
 	Analyzer analyzer;
+	
+	Map<String, Analyzer> analyzersPerIndex = new HashMap<>();
 
-	@Getter
 	@Setter
 	FacetsConfig facetsConfig;
+	
+	Map<String, FacetsConfig> facetConfigPerIndex = new HashMap<>();
 	
 	@Getter
 	@Setter
@@ -65,12 +70,27 @@ public class LuceneIndexConfiguration extends IndexConfiguration<org.bson.Docume
 		return storage;
 	}
 	
-	public Analyzer getAnalyzer () {
+	public Analyzer getAnalyzer (final String index) {
+		if (analyzersPerIndex.containsKey(index)) {
+			return analyzersPerIndex.get(index);
+		}
 		return analyzer;
 	}
 	
-	public LuceneIndexConfiguration setAnalyzer (final Analyzer analyzer) {
-		this.analyzer = analyzer;
+	public LuceneIndexConfiguration addAnalyzer (final String index, final Analyzer analyzer) {
+		this.analyzersPerIndex.put(index, analyzer);
+		return this;
+	}
+	
+	public FacetsConfig getFacetsConfig (final String index) {
+		if (facetConfigPerIndex.containsKey(index)) {
+			return facetConfigPerIndex.get(index);
+		}
+		return facetsConfig;
+	}
+	
+	public LuceneIndexConfiguration addFacetConfig (final String index, final FacetsConfig facetConfig) {
+		this.facetConfigPerIndex.put(index, facetConfig);
 		return this;
 	}
 }

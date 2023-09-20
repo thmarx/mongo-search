@@ -73,8 +73,9 @@ public class Documents {
 			});
 		}
 
-		if (configuration.getDocumentExtender() != null) {
-			configuration.getDocumentExtender().accept(document, doc);
+		var extender = configuration.getDocumentExtender(configuration.getIndexNameMapper().apply(database, collection));
+		if (extender != null) {
+			extender.accept(document, doc);
 		}
 
 		return doc;
