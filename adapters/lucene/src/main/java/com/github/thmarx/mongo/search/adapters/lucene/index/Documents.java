@@ -20,6 +20,7 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
  * #L%
  */
 
+import com.github.thmarx.mongo.search.index.configuration.DocumentExtender;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
@@ -73,9 +74,9 @@ public class Documents {
 			});
 		}
 
-		var extender = configuration.getDocumentExtender(configuration.getIndexNameMapper().apply(database, collection));
-		if (extender != null) {
-			extender.accept(document, doc);
+		
+		if (configuration.getDocumentExtender() != null) {
+			configuration.getDocumentExtender().extend(new DocumentExtender.Context(database, collection), document, doc);
 		}
 
 		return doc;

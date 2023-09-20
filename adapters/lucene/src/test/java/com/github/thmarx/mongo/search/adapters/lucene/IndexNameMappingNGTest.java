@@ -3,32 +3,17 @@ package com.github.thmarx.mongo.search.adapters.lucene;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.de.GermanAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.facet.FacetResult;
-import org.apache.lucene.facet.Facets;
-import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.facet.FacetsConfig;
-import org.apache.lucene.facet.sortedset.DefaultSortedSetDocValuesReaderState;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts;
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.store.FSDirectory;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
@@ -41,7 +26,6 @@ import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneFieldConfigura
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
 import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.commands.InitializeCommand;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
 /*-
@@ -111,7 +95,7 @@ public class IndexNameMappingNGTest extends AbstractContainerTest {
 		configuration.setDefaultFacetsConfig(facetConfig);
 		// index multiple collections into same index
 		configuration.setIndexNameMapper((db, col) -> db);
-		configuration.setDocumentExtender((source, target) -> {
+		configuration.setDocumentExtender((context, source, target) -> {
 			var values = ListFieldMappers.toString("tags", source);
 			if (values != null && !values.isEmpty()) {
 				values.forEach(value -> {
@@ -156,8 +140,8 @@ public class IndexNameMappingNGTest extends AbstractContainerTest {
 		insertDocument(COLLECTION_DOCUMENTS, Map.of("name", "thorsten"));
 		insertDocument(COLLECTION_BOOKS, Map.of("author", "lara"));
 
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize(COLLECTION_DOCUMENTS) == 1);
-		Awaitility.await().atMost(10, TimeUnit.MINUTES).until(() -> getSize(COLLECTION_BOOKS) == 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_DOCUMENTS) == 1);
+		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize(COLLECTION_BOOKS) == 1);
 
 		assertCollectionSize(COLLECTION_DOCUMENTS, 1);
 		assertCollectionSize(COLLECTION_BOOKS, 1);

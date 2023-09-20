@@ -1,4 +1,8 @@
-package com.github.thmarx.mongo.search.adapter;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
+package com.github.thmarx.mongo.search.index.configuration;
 
 /*-
  * #%L
@@ -20,24 +24,13 @@ package com.github.thmarx.mongo.search.adapter;
  * #L%
  */
 
-import java.io.IOException;
-import org.bson.Document;
-
-import com.github.thmarx.mongo.search.index.messages.Message;
-
 /**
  *
  * @author t.marx
  */
-public interface IndexAdapter extends AutoCloseable {
+public interface DocumentExtender<SD, TD> {
 
-	void indexDocument (final String database, final String collection, final Document document) throws IOException;
-
-	void clearCollection (final String database, final String collection) throws IOException;
+	public void extend (Context context, SD source, TD target);
 	
-	void enqueueMessage (Message command);
-	
-	void startQueueWorker();
-
-	void pauseQueueWorker();
+	public record Context (String database, String collection){}
 }

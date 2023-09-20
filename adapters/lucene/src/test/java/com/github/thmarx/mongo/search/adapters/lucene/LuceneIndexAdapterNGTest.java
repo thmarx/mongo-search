@@ -107,7 +107,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		configuration.setCommitDelaySeconds(1);
 		configuration.setStorage(new FileSystemStorage(Path.of("target/index")));
 		configuration.setDefaultFacetsConfig(facetConfig);
-		configuration.setDocumentExtender((source, target) -> {
+		configuration.setDocumentExtender((context, source, target) -> {
 			var values = ListFieldMappers.toString("tags", source);
 			if (values != null && !values.isEmpty()) {
 				values.forEach(value -> {
