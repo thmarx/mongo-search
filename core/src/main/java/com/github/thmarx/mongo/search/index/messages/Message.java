@@ -30,5 +30,5 @@ package com.github.thmarx.mongo.search.index.messages;
  * @author t.marx
  */
 public interface Message {
-	
+	String database();
 }

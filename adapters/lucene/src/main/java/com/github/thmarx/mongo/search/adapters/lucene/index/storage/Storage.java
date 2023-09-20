@@ -31,9 +31,8 @@ import org.apache.lucene.store.Directory;
  *
  * @author t.marx
  */
-public interface Storage extends AutoCloseable {
+public interface Storage {
+	public Directory createDirectory (final String indexName) throws IOException;
 	
-	public Directory getDirectory ();
-	
-	public void open () throws IOException;
+	public void deleteDirectoy (final String indexName) throws IOException;
 }

@@ -122,7 +122,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		facetConfig.setMultiValued("tags", true);
 		configuration.addFieldConfiguration("dokumente", LuceneFieldConfiguration.builder()
-				.fieldName("tags")
+				.fieldName("tags") 
 				.indexFieldName("tags")
 				.stored(true)
 				.keyword(true)
@@ -204,12 +204,12 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
 
-		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
+		IndexSearcher searcher = luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().acquire();
 		try {
 			var uid = searcher.getIndexReader().storedFields().document(0).get("_id");
 			deleteDocument("dokumente", uid);
 		} finally {
-			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
+			luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().release(searcher);
 		}
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
@@ -233,7 +233,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
 
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
 
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
@@ -274,7 +274,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 1);
 
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
 
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
@@ -305,7 +305,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 		
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") == 2);
 
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
 
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
@@ -336,7 +336,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
 
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
 
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
@@ -366,7 +366,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> getSize("dokumente") > 0);
 
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index")));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(Path.of("target/index/dokumente")));
 		try {
 
 			org.apache.lucene.document.Document doc = reader.storedFields().document(0);
@@ -401,15 +401,15 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		luceneIndexAdapter.commit();
 
-		Set<String> tags = getSortedSetFacet("dokumente", "tags");
+		Set<String> tags = getSortedSetFacet("tags");
 		Assertions.assertThat(tags)
 				.isNotNull()
 				.hasSize(3)
 				.containsExactlyInAnyOrder("eins", "zwei", "drei");
 	}
 
-	private Set<String> getSortedSetFacet(final String collectionName, final String fieldName) throws IOException {
-		IndexSearcher searcher = luceneIndexAdapter.getIndex().getSearcherManager().acquire();
+	private Set<String> getSortedSetFacet(final String fieldName) throws IOException {
+		IndexSearcher searcher = luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().acquire();
 		try {
 			/*
 			 * SortedSetDocValues sortedSetValues =
@@ -427,7 +427,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 			FacetsCollector collector = new FacetsCollector();
 
-			TermQuery collectionQuery = new TermQuery(new Term("_collection", collectionName));
+			TermQuery collectionQuery = new TermQuery(new Term("_collection", "dokumente"));
 
 			FacetsCollector.search(searcher, collectionQuery, 10, collector);
 			Facets facets = new SortedSetDocValuesFacetCounts(state, collector);
@@ -437,7 +437,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 			return fieldValues;
 		} finally {
-			luceneIndexAdapter.getIndex().getSearcherManager().release(searcher);
+			luceneIndexAdapter.getIndex("search", "dokumente").getSearcherManager().release(searcher);
 		}
 	}
 
