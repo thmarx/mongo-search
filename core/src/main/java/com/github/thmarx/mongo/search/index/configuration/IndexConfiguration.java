@@ -2,6 +2,8 @@ package com.github.thmarx.mongo.search.index.configuration;
 
 import com.github.thmarx.mongo.search.index.utils.MultiMap;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -36,11 +38,11 @@ import lombok.Setter;
  */
 public class IndexConfiguration<SD, TD, FCT extends FieldConfiguration> {
 	/**
-	 * Extender for the document. It's used to add fields to the index document which are not in the mongodb document.
+	 * Default extender for the document. It's used to add fields to the index document which are not in the mongodb document.
 	 */
-    @Getter
     @Setter
-	private BiConsumer<SD, TD> documentExtender = (source, target) -> {};
+	@Getter
+	private DocumentExtender<SD, TD> documentExtender = (context, source, target) -> {};
 	
 	/**
 	 * All field configurations.

@@ -23,9 +23,11 @@ package com.github.thmarx.mongo.search.adapters.lucene.index.storage;
  * limitations under the License.
  * #L%
  */
-
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -35,27 +37,30 @@ import org.apache.lucene.store.FSDirectory;
  */
 public class FileSystemStorage implements Storage {
 
-	private Directory directory;
-	
-	private final Path path;
-	
-	public FileSystemStorage (final Path path) {
-		this.path = path;
-	}
-	
-	@Override
-	public Directory getDirectory() {
-		return directory;
+	private final Path basePath;
+
+	public FileSystemStorage(final Path path) {
+		this.basePath = path;
 	}
 
 	@Override
-	public void open() throws IOException {
-		directory = FSDirectory.open(path);
+	public Directory createDirectory(String indexName) throws IOException {
+		var indexPath = basePath.resolve(indexName);
+		if (!Files.exists(indexPath)) {
+			Files.createDirectories(indexPath);
+		}
+		return FSDirectory.open(basePath.resolve(indexName));
 	}
 
 	@Override
-	public void close() throws Exception {
-		this.directory.close();
+	public void deleteDirectoy(String indexName) throws IOException {
+		var indexPath = basePath.resolve(indexName);
+		if (Files.exists(indexPath)) {
+			Files.walk(indexPath)
+					.sorted(Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
+		}
 	}
-	
+
 }

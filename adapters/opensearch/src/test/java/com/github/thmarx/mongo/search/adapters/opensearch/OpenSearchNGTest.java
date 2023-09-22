@@ -25,7 +25,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.commands.InitializeCommand;
+import com.github.thmarx.mongo.search.index.commands.IndexCollectionsCommand;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
@@ -124,7 +124,7 @@ public class OpenSearchNGTest extends AbstractContainerTest {
 
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
-		mongoSearch.execute(new InitializeCommand(List.of(COLLECTION_DOKUMENTE)));
+		mongoSearch.execute(new IndexCollectionsCommand(List.of(COLLECTION_DOKUMENTE)));
 		
 		Thread.sleep(200);
 	}

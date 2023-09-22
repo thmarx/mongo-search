@@ -33,6 +33,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherFactory;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NRTCachingDirectory;
 
 /**
@@ -46,20 +47,21 @@ public class LuceneIndex {
 	private SearcherManager searcherManager;
 	
 	private final LuceneIndexConfiguration configuration;
-	
-	FacetsConfig facetsConfig = null;
+	private final String name;
+	Directory directory;
 
-	public LuceneIndex(LuceneIndexConfiguration configuration) {
+	public LuceneIndex(String name, LuceneIndexConfiguration configuration) {
+		this.name = name;
 		this.configuration = configuration;
-		this.facetsConfig = configuration.facetsConfig;
 	}
 
 	public LuceneIndex open() throws IOException {
 		
-		configuration.getStorage().open();
+		this.directory = configuration.getStorage().createDirectory(name);
 		
-		NRTCachingDirectory cachedFSDir = new NRTCachingDirectory(configuration.getStorage().getDirectory(), 5.0, 60.0);
-		IndexWriterConfig conf = new IndexWriterConfig(configuration.getAnalyzer());
+		NRTCachingDirectory cachedFSDir = new NRTCachingDirectory(this.directory, 5.0, 60.0);
+		IndexWriterConfig conf = new IndexWriterConfig(configuration.getAnalyzer(this.name));
+		conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 		writer = new IndexWriter(cachedFSDir, conf);
 		
 		searcherManager = new SearcherManager(writer, true, false, new SearcherFactory());
@@ -72,6 +74,7 @@ public class LuceneIndex {
 	}
 	
 	public void index (final Document document) throws IOException {
+		var facetsConfig = configuration.getFacetsConfig(name);
 		if (facetsConfig != null) {
 			writer.addDocument(facetsConfig.build(document));
 		} else {
@@ -102,7 +105,7 @@ public class LuceneIndex {
 			writer.close();
 		}
 		
-		configuration.getStorage().close();
+		this.directory.close();
 	}
 	
 	public int size(String database, String collection) throws IOException {

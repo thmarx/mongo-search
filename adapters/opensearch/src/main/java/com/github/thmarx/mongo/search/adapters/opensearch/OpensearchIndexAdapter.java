@@ -34,6 +34,7 @@ import org.opensearch.client.opensearch.core.IndexResponse;
  * #L%
  */
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
+import com.github.thmarx.mongo.search.index.configuration.DocumentExtender;
 import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
 import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
 import com.github.thmarx.mongo.search.index.messages.InsertMessage;
@@ -133,7 +134,7 @@ public class OpensearchIndexAdapter extends AbstractIndexAdapter<OpensearchIndex
 		}
 
 		if (configuration.getDocumentExtender() != null) {
-			configuration.getDocumentExtender().accept(document, indexDocument);
+			configuration.getDocumentExtender().extend(new DocumentExtender.Context(database, collection), document, indexDocument);
 		}
 
 		return indexDocument;

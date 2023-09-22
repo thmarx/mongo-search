@@ -28,6 +28,7 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
+import com.github.thmarx.mongo.search.index.configuration.DocumentExtender;
 import com.github.thmarx.mongo.search.index.messages.Message;
 import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
 import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
@@ -136,7 +137,7 @@ public class ElasticsearchIndexAdapter extends AbstractIndexAdapter<Elasticsearc
 		}
 
 		if (configuration.getDocumentExtender() != null) {
-			configuration.getDocumentExtender().accept(document, indexDocument);
+			configuration.getDocumentExtender().extend(new DocumentExtender.Context(database, collection), document, indexDocument);
 		}
 
 		return indexDocument;

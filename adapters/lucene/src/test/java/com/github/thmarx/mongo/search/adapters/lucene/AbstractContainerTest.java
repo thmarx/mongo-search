@@ -34,22 +34,23 @@ import com.mongodb.client.MongoClients;
  */
 public class AbstractContainerTest {
 
-	protected MongoDBContainer mongdbContainer;
-	protected MongoClient mongoClient;
+	protected static MongoDBContainer mongdbContainer;
+	protected static MongoClient mongoClient;
 
-	@BeforeClass
-	public void up() {
+	static {
 		mongdbContainer = new MongoDBContainer(DockerImageName.parse(
 				"mongo:6.0.9"
 		));
 		mongdbContainer.start();
-
+	}
+	
+	@BeforeClass
+	public void up() {
 		mongoClient = MongoClients.create(mongdbContainer.getConnectionString());
 	}
 
 	@AfterClass
 	public void down() {
 		mongoClient.close();
-		mongdbContainer.stop();
 	}
 }

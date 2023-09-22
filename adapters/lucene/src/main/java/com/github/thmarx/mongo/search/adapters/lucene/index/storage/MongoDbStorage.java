@@ -33,33 +33,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MongoDbStorage implements Storage {
 
-    private Directory directory;
-
     private final MongoClient mongoClient;
     private final String database;
-    private final String indexName;
-    private boolean sharding = false;
 
-    public MongoDbStorage (final MongoClient client, final String database, final String indexName, final boolean sharding) {
-        this(client, database, indexName);
-    }
-    
+	@Override
+	public Directory createDirectory(String indexName) throws IOException {
+		return new DistributedDirectory(new MongoDirectory(mongoClient, database, indexName));
+	}
 
-    @Override
-    public void close() throws Exception {
-        if (directory != null) {
-            directory.close();
-        }
-    }
-
-    @Override
-    public Directory getDirectory() {
-        return directory;
-    }
-
-    @Override
-    public void open() throws IOException {
-        directory = new DistributedDirectory(new MongoDirectory(mongoClient, database, indexName));
-    }
+	@Override
+	public void deleteDirectoy(String indexName) throws IOException {
+		MongoDirectory.dropIndex(mongoClient, database, indexName);
+	}
     
 }

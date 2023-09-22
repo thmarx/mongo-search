@@ -23,6 +23,7 @@ import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
 import com.github.thmarx.mongo.search.adapters.lucene.index.Documents;
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndex;
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
+import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexManager;
 import com.github.thmarx.mongo.search.index.messages.Message;
 import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
 import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
@@ -48,7 +49,7 @@ import org.bson.Document;
 @Slf4j
 public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfiguration> {
 
-	LuceneIndex luceneIndex;
+	LuceneIndexManager indexManager;
 
 	private Thread queueWorkerThread;
 
@@ -73,6 +74,8 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 				.add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST)
 				.add(new TermQuery(new Term("_database", database)), BooleanClause.Occur.MUST)
 				.build();
+		
+		final LuceneIndex luceneIndex = indexManager.createOrGet(database, collection);
 		luceneIndex.deleteDocuments(query);
 
 		org.apache.lucene.document.Document doc = documentHelper.build(database, collection, uid, document);
@@ -86,15 +89,17 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 				.add(new TermQuery(new Term("_collection", collection)), BooleanClause.Occur.MUST)
 				.add(new TermQuery(new Term("_database", database)), BooleanClause.Occur.MUST)
 				.build();
+		
+		final LuceneIndex luceneIndex = indexManager.createOrGet(database, collection);
 		luceneIndex.deleteDocuments(query);
 	}
 
 	public void commit() {
-		luceneIndex.commit();
+		indexManager.commit();
 	}
 
-	public LuceneIndex getIndex() {
-		return luceneIndex;
+	public LuceneIndex getIndex(final String database, final String collection) throws IOException {
+		return indexManager.createOrGet(database, collection);
 	}
 
 	@Override
@@ -106,8 +111,8 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 		queueWorker.stop();
 		log.debug("stop queue worker thread");
 		queueWorkerThread.interrupt();
-		log.debug("stop lucene index");
-		luceneIndex.close();
+		log.debug("close indexManager");
+		indexManager.close();
 	}
 
 	@Override
@@ -122,13 +127,12 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 	public void open() throws IOException {
 
-		luceneIndex = new LuceneIndex(configuration);
-		luceneIndex.open();
+		indexManager = new LuceneIndexManager(configuration);
 
 		scheduler.scheduleWithFixedDelay(() -> {
 			try {
 				log.trace("commit index");
-				luceneIndex.commit();
+				indexManager.commit();
 				log.trace("commited");
 			} catch (Exception e) {
 				log.error("", e);
@@ -150,8 +154,9 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 										BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_database", index.database())), BooleanClause.Occur.MUST)
 								.build();
+						
+						var luceneIndex = indexManager.createOrGet(index.database(), index.collection());
 						luceneIndex.deleteDocuments(query);
-
 						luceneIndex.index(doc);
 					} else if (command instanceof DeleteMessage delete) {
 						Query query = new BooleanQuery.Builder()
@@ -160,19 +165,19 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 										BooleanClause.Occur.MUST)
 								.add(new TermQuery(new Term("_database", delete.database())), BooleanClause.Occur.MUST)
 								.build();
+						
+						var luceneIndex = indexManager.createOrGet(delete.database(), delete.collection());
 						luceneIndex.deleteDocuments(query);
 					} else if (command instanceof DropCollectionMessage dropCollection) {
 						Query query = new BooleanQuery.Builder()
 								.add(new TermQuery(new Term("_collection", dropCollection.collection())),
 										BooleanClause.Occur.MUST)
 								.build();
+						
+						var luceneIndex = indexManager.createOrGet(dropCollection.database(), dropCollection.collection());
 						luceneIndex.deleteDocuments(query);
 					} else if (command instanceof DropDatabaseMessage dropDatabase) {
-						Query query = new BooleanQuery.Builder()
-								.add(new TermQuery(new Term("_database", dropDatabase.database())),
-										BooleanClause.Occur.MUST)
-								.build();
-						luceneIndex.deleteDocuments(query);
+						indexManager.dropAllIndices();
 					}
 				} catch (InterruptedException ex) {
 					// nothing to do
@@ -187,10 +192,14 @@ public class LuceneIndexAdapter extends AbstractIndexAdapter<LuceneIndexConfigur
 
 	public int size(String database, String collection) {
 		try {
-			return luceneIndex.size(database, collection);
+			return indexManager.createOrGet(database, collection).size(database, collection);
 		} catch (IOException ex) {
 			return 0;
 		}
+	}
+	
+	public String getIndexName (String database, String collection) {
+		return configuration.getIndexNameMapper().apply(database, collection);
 	}
 
 }

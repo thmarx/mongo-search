@@ -24,6 +24,7 @@ package com.github.thmarx.mongo.search.adapters.solr;
  * #L%
  */
 import com.github.thmarx.mongo.search.adapter.AbstractIndexAdapter;
+import com.github.thmarx.mongo.search.index.configuration.DocumentExtender;
 import com.github.thmarx.mongo.search.index.messages.Message;
 import com.github.thmarx.mongo.search.index.messages.DeleteMessage;
 import com.github.thmarx.mongo.search.index.messages.DropCollectionMessage;
@@ -131,7 +132,7 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 		}
 
 		if (configuration.getDocumentExtender() != null) {
-			configuration.getDocumentExtender().accept(document, indexDocument);
+			configuration.getDocumentExtender().extend(new DocumentExtender.Context(database, collection), document, indexDocument);
 		}
 
 		return indexDocument;
