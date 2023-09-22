@@ -1,37 +1,43 @@
 
-# mongo-connect
+# mongo-search
 
-mongo-search hilft dabei deine mongodb datenbank und einen SuchIndex synchron zu halten. 
-Änderungen in der Datenbank werden dabei nach einer bestimmten Konfiguration in den SuchIndex übernommen.
+mongo-search keeps your search index in sync with any mongo database.
+For this it uses mongodb change streams, which are only available in the replica sets.
+For more information of mongo change stream [read here](https://www.mongodb.com/docs/manual/changeStreams/).
 
-## Unterstütze Operationen
+# mongo-search-service
 
-Das Hinzufügen, Aktualisieren und Löschen von Dokumenten wird unterstützt.
-Das löschen einer Collection oder einer Datenbank führt zum löschen der jeweiligen Dokumente aus dem SuchIndex.
+If you're looking for a command line tool instead of implementing it yourself:
+[mongo-search-service](https://github.com/thmarx/monog-search-service).
 
-## SuchIndex Implementierungen
+## Supported operations
 
-Es stehen verschiedene ADapter für unterschiedliche SuchIndicies zu Verfügung.
-Untestützt werden Lucene, ElasticSearch, OpenSearch und Apache Solr.
+Adding, updating and deleting documents is supported.
+Deleting a collection or a database results in the relevant documents being deleted from the search index.
 
-### Lucene Adapter
+## Search index implementations
 
-Der Lucene Adapter synchronisert die Änderungen in einen lokalen Lucene Index.
+There are different adapters available for different search indices.
+Lucene, ElasticSearch, OpenSearch and Apache Solr are supported.
 
-### ElasticSearch Adapter
+### Lucene adapter
 
-Der ElasticSearch Adapter synchronisiert die Änderungen in eine remote ElasticSearch Instanz.
-Die Verwaltung des Schemas muss extern über einen Administrator erfolgen und wird nicht von mongo-search übernommen.
+The Lucene adapter synchronizes the changes into a local Lucene index.
 
-### OpenSearch Adapter
+### ElasticSearch adapter
 
-Der OpenSearch Adapter synchronisiert die Änderungen in eine remote OpenSearch Instanz.
-Die Verwaltung des Schemas muss extern über einen Administrator erfolgen und wird nicht von mongo-search übernommen.
+The ElasticSearch adapter synchronizes the changes to a remote ElasticSearch instance.
+Management of the schema must be done externally by an administrator and is not handled by mongo-search.
 
-### Apache Solr Adapter
+### OpenSearch adapter
 
-Der OpenSearch Adapter synchronisiert die Änderungen in eine remote OpenSearch Instanz.
-Die Verwaltung des Schemas muss extern über einen Administrator erfolgen und wird nicht von mongo-search übernommen.
+The OpenSearch adapter synchronizes the changes to a remote OpenSearch instance.
+Management of the schema must be done externally by an administrator and is not handled by mongo-search.
+
+### Apache Solr adapter
+
+The Solr adapter synchronizes the changes to a remote Solr instance.
+Management of the schema must be done externally by an administrator and is not handled by mongo-search.
 
 ## Examples
 
@@ -44,11 +50,11 @@ LuceneIndexConfiguration configuration = new LuceneIndexConfiguration();
 facetConfig.setMultiValued("tags", true);
 PerFieldAnalyzerWrapper perFieldAnalyzerWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(),
 		Map.of("name", new GermanAnalyzer()));
-configuration.setAnalyzer(perFieldAnalyzerWrapper);						// configure the analyzer
+configuration.setDefaultAnalyzer(perFieldAnalyzerWrapper);				// configure the analyzer
 configuration.setCommitDelaySeconds(1);									// delay in seconds to commit changes
 configuration.setStorage(new FileSystemStorage(Path.of("/tmp/index"))); // config the storage
-configuration.setFacetsConfig(facetConfig);								// add a facet config if necessary
-configuration.setDocumentExtender((source, target) -> {					// extending a document with custom fields
+configuration.setDefaultFacetsConfig(facetConfig);						// add a facet config if necessary
+configuration.setDocumentExtender((context, source, target) -> {		// extending a document with custom fields
 	var values = ListFieldMappers.toString("tags", source);
 	if (values != null && !values.isEmpty()) {
 		values.forEach(value -> {
@@ -178,16 +184,14 @@ mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 
 ## Commands
 
-In manchen Situationen ist es nötig
+mongo-search makes use of mongodb ChangeStream feature to add new documents to the index.
+So in some situations you may have the need to index all documents. 
+This may be the case mongo-search was down for a longer time and the mongodb oplog doesn't contain all changes.
+Here you can use the IndexCollectionsCommand.
 
-### InitializeCommand
-The InitializeCommand iterates over all documents in the list of collections and adds them to the index.
+### IndexCollectionsCommand
+
+The IndexCollectionsCommand iterates over all documents in the list of collections and adds them to the index.
 ```java
 mongoSearch.executeCommand(new InitializeCommand(List.of("collectionA", "collectionB")));
-```
-
-### ReIndexCollectionCommand
-The ReIndexCollectionCommand is used to index only documents of a single collection.
-```java
-mongoSearch.executeCommand(new ReIndexCollectionCommand("collectionA"));
 ```
