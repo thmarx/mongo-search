@@ -2,7 +2,7 @@
 # mongo-search
 
 mongo-search keeps your search index in sync with any mongo database.
-For this it uses mongodb change streams, which are only available in the replica sets.
+For this it uses mongodb change streams, which are only available for replica sets.
 For more information of mongo change stream [read here](https://www.mongodb.com/docs/manual/changeStreams/).
 
 # mongo-search-service
