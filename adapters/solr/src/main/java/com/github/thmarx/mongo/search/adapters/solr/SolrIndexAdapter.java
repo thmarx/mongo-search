@@ -111,7 +111,8 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 					} else if (message instanceof DropCollectionMessage dropCollectionCommand) {
 						dropCollection(dropCollectionCommand);
 					}
-
+				} catch (InterruptedException ie) {
+					// nothing to to here
 				} catch (Exception ex) {
 					log.error("", ex);
 				}
