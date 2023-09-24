@@ -58,10 +58,14 @@ public class SolrIndexAdapter extends AbstractIndexAdapter<SolrIndexConfiguratio
 
 	@Override
 	public void indexDocument(String database, String collection, Document document) throws IOException {
+		InsertMessage message = new InsertMessage(document.getObjectId("_id").toString(), database, collection, document);
+		index(message);
 	}
 
 	@Override
 	public void clearCollection(String database, String collection) throws IOException {
+		DropCollectionMessage message = new DropCollectionMessage(database, collection);
+		dropCollection(message);
 	}
 
 	public void commit() {
