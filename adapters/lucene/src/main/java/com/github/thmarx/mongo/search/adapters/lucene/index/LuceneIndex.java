@@ -23,7 +23,6 @@ package com.github.thmarx.mongo.search.adapters.lucene.index;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
