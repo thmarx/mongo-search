@@ -19,52 +19,27 @@ package com.github.thmarx.mongo.search.adapters.opensearch;
  * limitations under the License.
  * #L%
  */
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.commands.IndexCollectionsCommand;
+import com.github.thmarx.mongo.search.index.actions.IndexCollectionsAction;
 import com.github.thmarx.mongo.search.index.configuration.FieldConfiguration;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Updates;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
-import org.apache.hc.client5.http.ssl.TrustAllStrategy;
-import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.opensearch.client.RestClient;
-import org.opensearch.client.RestClientBuilder;
-import org.opensearch.client.json.jackson.JacksonJsonpMapper;
-import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.core.CountResponse;
 import org.opensearch.client.opensearch.core.GetResponse;
-import org.opensearch.client.transport.OpenSearchTransport;
-import org.opensearch.client.transport.rest_client.RestClientTransport;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -124,7 +99,7 @@ public class OpenSearchNGTest extends AbstractContainerTest {
 
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
-		mongoSearch.execute(new IndexCollectionsCommand(List.of(COLLECTION_DOKUMENTE)));
+		mongoSearch.execute(new IndexCollectionsAction(List.of(COLLECTION_DOKUMENTE)));
 		
 		Thread.sleep(200);
 	}

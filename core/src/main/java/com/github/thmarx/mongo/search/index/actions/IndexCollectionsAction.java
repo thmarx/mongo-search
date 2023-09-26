@@ -1,4 +1,4 @@
-package com.github.thmarx.mongo.search.index.commands;
+package com.github.thmarx.mongo.search.index.actions;
 
 /*-
  * #%L
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class IndexCollectionsCommand implements Command {
+public class IndexCollectionsAction implements Action {
 
     private final List<String> collections;
 

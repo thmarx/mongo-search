@@ -182,16 +182,16 @@ mongoSearch = new MongoSearch();
 mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 ```
 
-## Commands
+## Actions
 
 mongo-search makes use of mongodb ChangeStream feature to add new documents to the index.
 So in some situations you may have the need to index all documents. 
 This may be the case mongo-search was down for a longer time and the mongodb oplog doesn't contain all changes.
-Here you can use the IndexCollectionsCommand.
+Here you can use the IndexCollectionsAction.
 
-### IndexCollectionsCommand
+### IndexCollectionsAction
 
-The IndexCollectionsCommand iterates over all documents in the list of collections and adds them to the index.
+The IndexCollectionsAction iterates over all documents in the list of collections and adds them to the index.
 ```java
-mongoSearch.executeCommand(new InitializeCommand(List.of("collectionA", "collectionB")));
+mongoSearch.execute(new IndexCollectionsAction(List.of("collectionA", "collectionB")));
 ```

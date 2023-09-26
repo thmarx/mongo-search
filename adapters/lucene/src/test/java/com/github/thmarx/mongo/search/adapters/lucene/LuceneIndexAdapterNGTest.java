@@ -41,7 +41,7 @@ import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneFieldConfigura
 import com.github.thmarx.mongo.search.adapters.lucene.index.LuceneIndexConfiguration;
 import com.github.thmarx.mongo.search.adapters.lucene.index.storage.FileSystemStorage;
 import com.github.thmarx.mongo.search.index.MongoSearch;
-import com.github.thmarx.mongo.search.index.commands.IndexCollectionsCommand;
+import com.github.thmarx.mongo.search.index.actions.IndexCollectionsAction;
 import com.github.thmarx.mongo.search.mapper.FieldMappers;
 import com.github.thmarx.mongo.search.mapper.ListFieldMappers;
 /*-
@@ -165,7 +165,7 @@ public class LuceneIndexAdapterNGTest extends AbstractContainerTest {
 
 		mongoSearch = new MongoSearch();
 		mongoSearch.open(luceneIndexAdapter, database, List.of(COLLECTION_DOKUMENTE, "bilder"));
-		mongoSearch.execute(new IndexCollectionsCommand(List.of(COLLECTION_DOKUMENTE, "bilder")));
+		mongoSearch.execute(new IndexCollectionsAction(List.of(COLLECTION_DOKUMENTE, "bilder")));
 		
 		Thread.sleep(500);
 	}

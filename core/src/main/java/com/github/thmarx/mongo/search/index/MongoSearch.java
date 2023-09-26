@@ -31,12 +31,12 @@ import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.thmarx.mongo.search.adapter.IndexAdapter;
-import com.github.thmarx.mongo.search.index.commands.Command;
 import com.github.thmarx.mongo.search.index.indexer.Updater;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.github.thmarx.mongo.search.index.actions.Action;
 
 /**
  *
@@ -70,10 +70,10 @@ public class MongoSearch implements AutoCloseable {
 		indexAdapter.close();
 	}
 
-	public void execute (final Command command) {
+	public void execute (final Action action) {
 		executorService.execute(() -> {
 			try {
-				command.execute(indexAdapter, database);
+				action.execute(indexAdapter, database);
 			} catch (Exception e) {
 				log.error("error executing command", e);
 			}

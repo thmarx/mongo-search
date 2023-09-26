@@ -1,4 +1,4 @@
-package com.github.thmarx.mongo.search.index.commands;
+package com.github.thmarx.mongo.search.index.actions;
 
 /*-
  * #%L
@@ -24,7 +24,7 @@ import com.github.thmarx.mongo.search.adapter.IndexAdapter;
 import com.mongodb.client.MongoDatabase;
 
 @FunctionalInterface
-public interface Command {
+public interface Action {
     
     void execute(IndexAdapter indexAdapter, MongoDatabase database);
 }
