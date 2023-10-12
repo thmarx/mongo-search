@@ -152,7 +152,7 @@ mongoSearch = new MongoSearch();
 mongoSearch.open(indexAdapter, database, List.of(COLLECTION_DOKUMENTE));
 ```
 
-### OpenSearch
+### Apache solr
 
 ```java
 SolrIndexConfiguration configuration = new SolrIndexConfiguration();
