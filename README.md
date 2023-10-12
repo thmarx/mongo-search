@@ -8,7 +8,8 @@ For more information of mongo change stream [read here](https://www.mongodb.com/
 # mongo-search-service
 
 If you're looking for a command line tool instead of implementing it yourself:
-[mongo-search-service](https://github.com/thmarx/monog-search-service).
+[mongo-search-service](https://github.com/thmarx/monog-search-service)
+attention: not public now, will be released soon
 
 ## Supported operations
 
